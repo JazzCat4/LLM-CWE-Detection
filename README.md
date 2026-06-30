@@ -10,7 +10,8 @@ Verilog is a Hardware Description Language (HDL) that allows circuits to be repr
 
 # Methodology
 
-!\[Methodology Flow Graph](./Flow.png)
+<img width="1190" height="672" alt="image" src="https://github.com/user-attachments/assets/92903b3e-899a-4dae-9a06-6c016c769055" />
+
 
 ### Identify Module
 
