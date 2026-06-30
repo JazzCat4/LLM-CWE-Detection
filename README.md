@@ -158,7 +158,8 @@ Software-accessible registers or CSRs expose hardware features that should be pr
 1.	Are all registers that control clocks, resets, and power domains gated behind a privilege level check?
 2.	Can unprivileged software write DMA source, destination, or size registers that could redirect transfers into secure memory?
 3.	Do any registers mix unprivileged and privileged fields at the same address without per-field access control?
-What to look for:
+
+#### What to look for:
 1.	Power / clock control registers with no privilege gate: Look for registers that control clock gating, power domain switching, or IP resets that can be written by any bus master without a privilege level check. Unprivileged software can deny service to other components
 2.	DMA configuration accessible without privilege check: Look for DMA source, destination, and size registers writable without privilege gating. Unprivileged software can reprogram DMA to read from or write to secure memory regions
 3.	Hardware feature enable bits in mixed-privilege registers: Look for registers that pack both benign unprivileged fields and dangerous privileged fields into the same address. A full width write by unprivileged software modifies both
