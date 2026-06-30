@@ -32,7 +32,7 @@ The module, its roles, and features are then analyzed to determine:
 - Security rules set in place, e.g. restrictions on certain data
 - Finite State Machine states, transition rules, illegal states
 
-From these findings, a Program Dependency Graph is them created, modeling the haviors and controls of the module. The nodes consists of any signals, registers, and gates. The edges consist of data-flow and control-depdendency edges. The following is then performed on the graph:
+From these findings, a Program Dependency Graph is then created, modeling the behaviors and controls of the module. The nodes consists of any signals, registers, and gates. The edges consist of data-flow and control-depdendency relationships. The following is then performed on the graph:
 - Reachability Analysis: Determine whether one node can be reached from another through a path in the graph.
 - Dominance Analysis: Determine whether one node must always be encountered before another node
 - Tain Propagation Analysis: Track how information originating from an untrusted source flows through the design.
