@@ -1,0 +1,309 @@
+$date
+	Wed Jun 24 10:55:22 2026
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1ps
+$end
+$scope module fixed_tb $end
+$var wire 32 ! security_config [31:0] $end
+$var wire 32 " reg_rdata [31:0] $end
+$var wire 32 # crypto_key [31:0] $end
+$var reg 1 $ clk $end
+$var reg 2 % cpu_privilege_level [1:0] $end
+$var reg 1 & env_ok $end
+$var reg 3 ' reg_addr [2:0] $end
+$var reg 1 ( reg_ren $end
+$var reg 32 ) reg_wdata [31:0] $end
+$var reg 1 * reg_wen $end
+$var reg 1 + rst_n $end
+$var reg 1 , user_mode $end
+$scope module dut $end
+$var wire 1 $ clk $end
+$var wire 2 - cpu_privilege_level [1:0] $end
+$var wire 32 . crypto_key [31:0] $end
+$var wire 1 & env_ok $end
+$var wire 1 / is_privileged $end
+$var wire 1 0 priv_ok $end
+$var wire 3 1 reg_addr [2:0] $end
+$var wire 1 ( reg_ren $end
+$var wire 32 2 reg_wdata [31:0] $end
+$var wire 1 * reg_wen $end
+$var wire 1 + rst_n $end
+$var wire 32 3 security_config [31:0] $end
+$var wire 1 , user_mode $end
+$var reg 1 4 boot_done $end
+$var reg 32 5 crypto_key_reg [31:0] $end
+$var reg 32 6 reg_rdata [31:0] $end
+$var reg 1 7 sec_lock_reg $end
+$var reg 32 8 security_config_reg [31:0] $end
+$var reg 32 9 status_reg [31:0] $end
+$var reg 32 : version_reg [31:0] $end
+$upscope $end
+$scope task read_reg $end
+$var reg 3 ; addr [2:0] $end
+$upscope $end
+$scope task write_reg $end
+$var reg 3 < addr [2:0] $end
+$var reg 32 = data [31:0] $end
+$upscope $end
+$upscope $end
+$enddefinitions $end
+$comment Show the parameter values. $end
+$dumpall
+$end
+#0
+$dumpvars
+bx =
+bx <
+bx ;
+b100000000 :
+b0 9
+b0 8
+07
+b0 6
+b0 5
+04
+b0 3
+b0 2
+b0 1
+00
+0/
+b0 .
+b0 -
+1,
+0+
+0*
+b0 )
+0(
+b0 '
+0&
+b0 %
+0$
+b0 #
+b0 "
+b0 !
+$end
+#5000
+1$
+#10000
+0$
+#15000
+1+
+1$
+#20000
+0$
+#25000
+10
+1/
+1*
+b11111010110011101100101011111110 )
+b11111010110011101100101011111110 2
+b1 '
+b1 1
+b11111010110011101100101011111110 =
+b1 <
+1&
+0,
+b11 %
+b11 -
+1$
+#30000
+0$
+#35000
+0*
+1$
+#40000
+0$
+#45000
+17
+1*
+b1 )
+b1 2
+b11 '
+b11 1
+b1 =
+b11 <
+1$
+#50000
+0$
+#55000
+0*
+1$
+#60000
+0$
+#65000
+07
+0+
+1$
+#70000
+0$
+#75000
+1+
+1$
+#80000
+0$
+#85000
+b10111010110100001011101011010000 !
+b10111010110100001011101011010000 3
+b10111010110100001011101011010000 8
+00
+0/
+1*
+b10111010110100001011101011010000 )
+b10111010110100001011101011010000 2
+b0 '
+b0 1
+b10111010110100001011101011010000 =
+b0 <
+1,
+b0 %
+b0 -
+1$
+#90000
+0$
+#95000
+0*
+1$
+#100000
+0$
+#105000
+1(
+b0 ;
+1$
+#110000
+0$
+#115000
+0(
+1$
+#120000
+0$
+#125000
+1*
+b10111010110100011011101011010001 )
+b10111010110100011011101011010001 2
+b1 '
+b1 1
+b10111010110100011011101011010001 =
+b1 <
+1$
+#130000
+0$
+#135000
+0*
+1$
+#140000
+0$
+#145000
+1(
+b1 ;
+1$
+#150000
+0$
+#155000
+0(
+1$
+#160000
+0$
+#165000
+1*
+b1 )
+b1 2
+b11 '
+b11 1
+b1 =
+b11 <
+1$
+#170000
+0$
+#175000
+0*
+1$
+#180000
+0$
+#185000
+10
+1/
+0,
+b11 %
+b11 -
+1$
+#190000
+0$
+#195000
+b10010001101000101011001111000 !
+b10010001101000101011001111000 3
+b10010001101000101011001111000 8
+00
+0/
+1*
+b10010001101000101011001111000 )
+b10010001101000101011001111000 2
+b0 '
+b0 1
+b10010001101000101011001111000 =
+b0 <
+1,
+b0 %
+b0 -
+1$
+#200000
+0$
+#205000
+0*
+1$
+#210000
+0$
+#215000
+10
+1/
+1(
+b0 ;
+0,
+b11 %
+b11 -
+1$
+#220000
+0$
+#225000
+0(
+1$
+#230000
+0$
+#235000
+b10101011110011011110111100000001 #
+b10101011110011011110111100000001 .
+b10101011110011011110111100000001 5
+00
+0/
+1*
+b10101011110011011110111100000001 )
+b10101011110011011110111100000001 2
+b1 '
+b1 1
+b10101011110011011110111100000001 =
+b1 <
+1,
+b0 %
+b0 -
+1$
+#240000
+0$
+#245000
+0*
+1$
+#250000
+0$
+#255000
+10
+1/
+0,
+b11 %
+b11 -
+1$
+#260000
+0$
+#265000
+1$
