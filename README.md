@@ -62,10 +62,9 @@ Situations where a resource holding sensitive data is reassigned or reused witho
 Shared resources accessible by multiple IP blocks or trust domains without proper isolation, allowing lower-trust agents to interfere with or observe high-trust agents’ data
 
 #### Core questions to ask:
-1.	Are all shared resources (memory, accelerators, buses) partitioned by trust domain with explicit access checks?
-2.	Are interrupt lines separated or tagged so non-secure peripherals cannot infer secure peripheral activity?
-3.	Do all bus transactions carry a master ID and security attribute that the logic validates?
-4.	Can a lower-privilege domain trigger a reset or clock gate that affects a higher-privilege domain?
+1.	Are all shared resources partitioned by a trust domain with explicit access checks?
+2.	Do all bus transactions carry a master ID and security attribute that the logic validates?
+3.	Can a lower-privilege domain trigger a reset or clock gate that affects a higher-privilege domain?
 
 #### What to look for:
 1.	Shared memory with no access partitioning: Look for memory mux logic that selects between multiple masters without any checks.
@@ -74,7 +73,7 @@ Shared resources accessible by multiple IP blocks or trust domains without prope
 4.	Shared clock/reset domains across trust boundaries: Look for a single reset or clock-gate signal shared between secure and non-secure domains. A non-secure agent triggering a reset can disrupt or clear a secure domain’s state.
 
 #### Checklist:
--	Every shared SRAM / cache bank has a domain tag or range firewall
+-	Every shared SRAM / cache bank has a domain tag or something similar
 -	Domain tags are hardware-assigned and not software-writable
 -	Shared resources are flushed / scrubbed on domain context switch
 -	All shared resources (memory, accelerators, buses) partitioned by trust domain have explicit access checks
@@ -92,13 +91,12 @@ Covers debug and test interfaces (e.g. JTAG) that are accessible without proper 
 
 #### What to look for:
 1.	JTAG/Debug ports with no authentication gate: Look for debug interfaces that become active based solely on a single unprotected pin or signal, with no credential checks
-2.	Debug/test modes controlled by fuse or strap with no further checks: Watch for lifecycle/strap signals that unlock debug with no secondary verification.
+2.	Debug/test modes controlled by fuse with no further checks: Watch for lifecycle signals that unlock debug with no secondary verification.
 3.	Scan chain exposure of sensitive registers: Check whether sensitive registers are directly included in scan chains without being excluded or obfuscated
 4.	Debug registers that allow arbitrary memory or CSR access: Look for debug backdoors that can read/write any address without range restrictions or privilege checks
 5.	Missing or by-passable authentication FSM: Look for authentication state machines that have weak transitions, reachable “authenticated” states without completing the full challenge-response sequence.
 6.	Debug interfaces active in production lifecycle states: Look for lifecycle/mode checks that do not properly disable debug in production/secure boot modes.
-7.	Test/Design for Testability logic not properly isolated: Watch for DFT structures that can be activated at runtime and expose internal state (such as a test mode)
-8.	Hardcoded debug credentials: Scan for hardcoded passwords or keys used to unlock debug access
+7.	Hardcoded debug credentials: Scan for hardcoded passwords or keys used to unlock debug access
 
 #### Checklist:
 -	JTAG disabled via OTP fuse in production builds
@@ -122,7 +120,7 @@ Debug or test modes that, when activated, bypass or override security lock bits,
 2.	Test/scan mode clears or resets lock registers: Look for scan or test reset signals that drive lock bit registers to zero. An attacker who can assert scan_rst can clear any lock and regain write access to protected registers
 3.	JTAG instruction that directly writes locked registers: Look for JTAG data register instructions that write directly to security-critical registers without consulting the corresponding lock bit, the JTAG command becomes a lock bypass.
 4.	Lifecycle downgrade re-enabling locks that were set: Look for lifecycle transitions back to a development state that zero out lock registers, allowing attackers to deliberately downgrade lifecycles to clear locks set in production
-5.	Shadow registers in debug mode that bypass lock enforcement: Look for mux-style assignments where debug_mode selects a direct write path to a sensitive registers, completely bypassing the lock=checked normal write path
+5.	Shadow registers in debug mode that bypass lock enforcement: Look for mux-style assignments where debug_mode selects a direct write path to a sensitive registers, completely bypassing the lock-checked normal write path
 
 #### Checklist: 
 -	Authenticated unlock required even when debus fuse is not blown
@@ -136,15 +134,12 @@ No detection or response logic for fault injection via voltage droops or clock a
 #### Core questions to ask:
 1.	Are there any security-critical comparisons protected by redundant checks across multiple cycles or logic cones?
 2.	Is there a clock frequency monitor or reference oscillator comparison that detects out-of-range clock speeds?
-3.	Are external-reset signals filtered for minimum pulse width before being acted on?
-4.	Do retry counters use saturating arithmetic and is the lockout condition checked in a glitch-resistant way?
+3.	Do retry counters use saturating arithmetic and is the lockout condition checked in a glitch-resistant way?
 
 #### What to look for:
 1.	Single-cycle security decisions with no redundancy: Look for authentication or access grant logic that resolves in a single clock cycle with no redundant check. A precisely timed clock glitch on that cycle can cause the comparison to be skipped.
-2.	No clock integrity / frequency monitoring logic: Look for designs that have no reference oscillator comparison, no frequency watchdog, and no out-of-range clock detection. The design blindly trusts whatever clock is presented to it.
-3.	Reset logic with no glitch filter: Look for asynchronous resets driven directly from an external pin with no debounce or minimum-pulse-width filter. A brief glitch on the reset pin can cause unintended partial reset.
-4.	Security-critical counters or FSMs with no error state: Look for retry counters or lockout FSMs where the increment and threshold check happen in a way that a glitch on a single cycle can prevent the counter from reaching its lockout value.
-5.	No voltage/clock glitch detection registers or interrupts: Look for a complete absence of any glitch_detected, brownout_detected, or freq-error signal in the design. Without detection, there is no response path even if the silicon has glitch sensors
+2.	Security-critical counters or FSMs with no error state: Look for retry counters or lockout FSMs where the increment and threshold check happen in a way that a glitch on a single cycle can prevent the counter from reaching its lockout value.
+3.	No voltage/clock glitch detection registers or interrupts: Look for a complete absence of any glitch_detected, brownout_detected, or freq-error signal in the design. Without detection, there is no response path even if the silicon has glitch sensors
 
 #### Checklist:
 -	Voltage / frequency monitors present with lockdown on violation
@@ -162,7 +157,7 @@ Software-accessible registers or CSRs expose hardware features that should be pr
 #### What to look for:
 1.	Power / clock control registers with no privilege gate: Look for registers that control clock gating, power domain switching, or IP resets that can be written by any bus master without a privilege level check. Unprivileged software can deny service to other components
 2.	DMA configuration accessible without privilege check: Look for DMA source, destination, and size registers writable without privilege gating. Unprivileged software can reprogram DMA to read from or write to secure memory regions
-3.	Hardware feature enable bits in mixed-privilege registers: Look for registers that pack both benign unprivileged fields and dangerous privileged fields into the same address. A full width write by unprivileged software modifies both
+3.	Hardware feature enable bits in mixed-privilege registers: Look for registers that pack both unprivileged fields and dangerous privileged fields into the same address. A full width write by unprivileged software modifies both
 
 #### Checklist:
 -	All hardware control registers (clocking, power, remapping) are privilege-gated
@@ -190,7 +185,7 @@ Memory protection logic that has overlapping region definitions and resolves con
 #### Checklist:
 -	No two regions produce conflicting permissions for any address
 -	Hardware detects overlapping region configurations
--	Tie-break / priority rule is documented and formally verified
+-	Tie-break / priority rule is documented and verified
 -	Default response for conflict is deny
 
 ### CWE-1262 - Improper Access Control for Register Interface
@@ -226,9 +221,8 @@ RTL implementation leaks information through power consumption, EM emissions, or
 3.	Are all secret comparisons constant-time with no early exit paths?
 
 #### What to look for:
-1.	Unbalanced switching activity on secret-dependent data paths: Look for operations where the output switching activity directly depends on the Hamming weight or Hamming distance of a secret value. Power consumption becomes a statistical oracle for the key.
-2.	Secret-dependent branching or operand selection: Look for if/case statements that select different operations, datapaths, or operands based on a secret bit. Different branches have different power profiles and propagation delays, leaking the secret through timing or power.
-3.	Non-constant-time comparison for authentication: Look for comparison loops with early-exit break conditions. The number of cycles taken before failure reveals how many bytes of the secret matched the input, enabling byte-at-a-time attacks.
+1.	Secret-dependent branching or operand selection: Look for if/case statements that select different operations, datapaths, or operands based on a secret bit. Different branches have different power profiles and propagation delays, leaking the secret through timing or power.
+2.	Non-constant-time comparison for authentication: Look for comparison loops with early-exit break conditions. The number of cycles taken before failure reveals how many bytes of the secret matched the input, enabling byte-at-a-time attacks.
 
 #### Checklist:
 -	All key-dependent logic uses mux (not if/case) for selection
@@ -239,7 +233,7 @@ RTL implementation leaks information through power consumption, EM emissions, or
 ## Test Benches for CWEs
 Based on previous analysis and review, a testbench is then created to target all potential / suspected vulnerabilities. For each CWE, a list of tests are given to test the module, however more tests should be included depending on the behavior and complexity of the module.
 
-### Testbench Rules
+### Testbench Guides
 
 #### CWE-226 - Sensitive Information in Resource Not Removed Before Reuse
 1.	After a resource (memory, register, buffer) is released and reallocated, verify the new owner cannot read prior contents by writing a known pattern. 
