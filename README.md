@@ -15,7 +15,7 @@ We created methodology to simplify the task of locating and fixing bugs for both
 <!--LLMs have an increasing amount of relevance in the field of cybersecurity and can be used to simplify the task. -->
 # 3. Methodology
 
-Our methodology was designed through analysis of CWEs, previous works, and constant testing, with the goal of providing an effective and efficient method to identify vulnerabilities. The figure below models the workflow of the methodology.
+Our methodology was designed through the analysis of CWE entries (MITRE, 2025), previous works, and constant testing, with the goal of providing an effective and efficient method to identify vulnerabilities that individuals with limited knowledge can utilize. We have limited our methodology and research to the listed CWEs on MITRE's 2025 Most Important Hardware Weaknesses list to target commonly seen vulnerabilities. 2 CWE entries on this list were omitted due to these vulnerabilities arising from microarchitectural design considerations. The figure below models the workflow of the methodology.
 
 <img width="1040" height="588" alt="Flow" src="https://github.com/user-attachments/assets/c60b714a-4af1-452e-b5ad-e9e287552014" />
 
@@ -42,7 +42,7 @@ From these findings, a Program Dependency Graph is then created, modeling the be
 - Tain Propagation Analysis: Track how information originating from an untrusted source flows through the design.
 
 ## CWE-Driven Manual Review
-Utilizing the module, and the results from the analysis, a CWE-driven review is performed. CWE reviews are chosen based on suspected / potential CWEs determined from module / asset / behavior identification, and graph analysis. Each listed CWE contains a brief description of the vulnerability, questions to guide thinkg, common causes, and a checklist to aid in identification.
+Utilizing the module and the results from the analysis, a CWE-driven review is performed. CWE reviews are chosen based on suspected / potential CWEs determined from module / asset / behavior identification, and graph analysis results. Each listed CWE contains a brief description of the vulnerability, questions to guide thinkg, common causes, and a checklist to aid in identification.
 
 ### CWE-226 - Sensitive Information in Resource Not Removed Before Reuse
 Situations where a resource holding sensitive data is reassigned or reused without being cleared, potentially leaking secrets
@@ -52,7 +52,7 @@ Situations where a resource holding sensitive data is reassigned or reused witho
 
 #### What to look for:
 1.	Registers reused without explicit reset: Look for registers that hold sensitive values that get reassigned or repurposed without a clearing step in between
-2.	FSM state transitions that skip a clear phase. Look for state machines that move from a “sensitive operation” state to an “idle/available” state without wiping intermediate registers
+2.	FSM state transitions that skip a clear phase: Look for state machines that move from a “sensitive operation” state to an “idle/available” state without wiping intermediate registers
 3.	Memory/RAM blocks reused across security contexts: Look for shared RAM or register files where one “owner” finished and another begins with no explicit zeroing between allocations.
 4.	Reset logic that doesn’t cover sensitive registers: Check that async/sync reset paths explicitly clear sensitive registers, a partial reset is a common issue.
 5.	Power on/reinitialization sequence: Look for initialization blocks (initial) or power-cycle sequences that assume registers start at zero without explicitly assigning them.
@@ -233,9 +233,8 @@ RTL implementation leaks information through power consumption, EM emissions, or
 -	No early-exit in crypto loops or comparators
 -	Timing of key-dependent operations is data-independent
 
-
 ## Test Benches for CWEs
-Based on previous analysis and review, a testbench is then created to target all potential / suspected vulnerabilities. For each CWE, a list of tests are given to test the module, however more tests should be included depending on the behavior and complexity of the module.
+Based on previous analysis and review, a testbench is then created to target all potential / suspected vulnerabilities. For each CWE, a list of tests are given to validate the module. More tests should be included depending on the behavior and complexity of the module.
 
 ### Testbench Guides
 
@@ -286,8 +285,7 @@ Based on previous analysis and review, a testbench is then created to target all
 3.	Testbenches should ensure that the circuit does perform any actions that allow users to guess what it is doing (calculations, character by character comparisons, etc.)
 
 ## Evaluate Needs
-The module is then tested under the testbench, and if all tests pass, then testing is complete. Otherwise, for each failed test, utilize the corresponding CWE-based design entry, and repair / modify module until all tests pass.
-
+The module is then tested under the testbench, and if all tests pass, then review is complete. Otherwise, for each failed test, utilize the corresponding CWE-based design entry, and repair / modify the module until all tests pass.
 
 ### CWE-Based Design Rules
 
@@ -339,15 +337,14 @@ The module is then tested under the testbench, and if all tests pass, then testi
 2.	All key-dependent logic uses mux (not if/case) for selection
 3.	Apply blinding or masking techniques to implementations of cryptographic algorithms
 
-
-
-
 # 4. Results
 
 # 5. Conclusion
 
 # 6. References
 <!--APA Format-->
+MITRE. (2025, August 18). CWE - 2025 Most Important Hardware Weaknesses. https://cwe.mitre.org/topHW/archive/2025/2025_CWE_MIHW.html
+
 Ahmad, B., Thakur, S., Tan, B., Karri, R., & Pearce, H. (2024). On Hardware Security Bug Code Fixes By Prompting Large Language Models. IEEE Transactions on Information Forensics and Security, 19, 1–1. https://doi.org/10.1109/tifs.2024.3374558
 
 Alsaqer, S., Alajmi, S., Ahmad, I., & Alfailakawi, M. (2024). The potential of LLMs in hardware design. Journal of Engineering Research, 13(3). https://doi.org/10.1016/j.jer.2024.08.001
