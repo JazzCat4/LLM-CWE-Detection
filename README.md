@@ -17,7 +17,7 @@ We created methodology to simplify the task of locating and fixing bugs for both
 
 Our methodology was designed through the analysis of CWE entries (MITRE, 2025), previous works, and constant testing, with the goal of providing an effective and efficient method to identify vulnerabilities that individuals with limited knowledge can utilize. We have limited our methodology and research to the listed CWEs on MITRE's 2025 Most Important Hardware Weaknesses list to target commonly seen vulnerabilities. 2 CWE entries on this list were omitted due to these vulnerabilities arising from microarchitectural design considerations. The figure below models the workflow of the methodology.
 
-<img width="1040" height="588" alt="Flow" src="https://github.com/user-attachments/assets/c60b714a-4af1-452e-b5ad-e9e287552014" />
+<img width="1040" height="588" alt="CWE Detection Methodology Flowchart" src="https://github.com/user-attachments/assets/c60b714a-4af1-452e-b5ad-e9e287552014" />
 
 Given an RTL Design, the role and features of the module are first identified. The module is then analyzed to determine important assets, behavior, data, and control flow. A CWE-driven review is then done utilzing the results of the analysis and module to identify potential vulnerabilties. A testbench is then created based off of potential / suspected vulnerabilities. The module is tested using the testbench, and reparied utilizing CWE-Design rules until the module passes simulation.
 
@@ -25,7 +25,7 @@ Given an RTL Design, the role and features of the module are first identified. T
 ## 3.1 Identify Module
 The role of the module and any potential features are first identified. These directly correspond to potential vulnerabilities, and are noted for identification.
 
-<img width="1178" height="265" alt="Vulnerability Table" src="https://github.com/user-attachments/assets/7492367d-0e89-4a0e-877b-163cd67bf3a0" />
+<img width="1178" height="265" alt="CWE Vulnerability Table" src="https://github.com/user-attachments/assets/7492367d-0e89-4a0e-877b-163cd67bf3a0" />
 
 ## 3.2 Identify Assets and Behavior
 The module, its roles, and features are then analyzed to determine:
