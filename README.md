@@ -22,12 +22,12 @@ Our methodology was designed through the analysis of CWE entries (MITRE, 2025), 
 Given an RTL Design, the role and features of the module are first identified. The module is then analyzed to determine important assets, behavior, data, and control flow. A CWE-driven review is then done utilzing the results of the analysis and module to identify potential vulnerabilties. A testbench is then created based off of potential / suspected vulnerabilities. The module is tested using the testbench, and reparied utilizing CWE-Design rules until the module passes simulation.
 
 
-## Identify Module
+## 3.1 Identify Module
 The role of the module and any potential features are first identified. These directly correspond to potential vulnerabilities, and are noted for identification.
 
 <img width="1178" height="265" alt="Vulnerability Table" src="https://github.com/user-attachments/assets/7492367d-0e89-4a0e-877b-163cd67bf3a0" />
 
-## Identify Assets and Behavior
+## 3.2 Identify Assets and Behavior
 The module, its roles, and features are then analyzed to determine:
 - Important assets such as keys, privilege bits, lifecycle states, etc.
 - Boundaries between privilege domains (privileged / unprivileged)
@@ -41,7 +41,7 @@ From these findings, a Program Dependency Graph is then created, modeling the be
 - Dominance Analysis: Determine whether one node must always be encountered before another node
 - Tain Propagation Analysis: Track how information originating from an untrusted source flows through the design.
 
-## CWE-Driven Manual Review
+## 3.3 CWE-Driven Manual Review
 Utilizing the module and the results from the analysis, a CWE-driven review is performed. CWE reviews are chosen based on suspected / potential CWEs determined from module / asset / behavior identification, and graph analysis results. Each listed CWE contains a brief description of the vulnerability, questions to guide thinkg, common causes, and a checklist to aid in identification.
 
 ### [CWE-226 - Sensitive Information in Resource Not Removed Before Reuse](https://cwe.mitre.org/data/definitions/226.html)
@@ -233,7 +233,7 @@ RTL implementation leaks information through power consumption, EM emissions, or
 -	No early-exit in crypto loops or comparators
 -	Timing of key-dependent operations is data-independent
 
-## Test Benches for CWEs
+## 3.4 Test Benches for CWEs
 Based on previous analysis and review, a testbench is then created to target all potential / suspected vulnerabilities. For each CWE, a list of tests are given to validate the module. More tests should be included depending on the behavior and complexity of the module.
 
 ### Testbench Guides
@@ -284,7 +284,7 @@ Based on previous analysis and review, a testbench is then created to target all
 2.	Test that encryption/decryption of different keys takes a constant number of cycles.
 3.	Testbenches should ensure that the circuit does perform any actions that allow users to guess what it is doing (calculations, character by character comparisons, etc.)
 
-## Evaluate Needs
+## 3.5 Simulation
 The module is then tested under the testbench, and if all tests pass, then review is complete. Otherwise, for each failed test, utilize the corresponding CWE-based design entry, and repair / modify the module until all tests pass.
 
 ### CWE-Based Design Rules
