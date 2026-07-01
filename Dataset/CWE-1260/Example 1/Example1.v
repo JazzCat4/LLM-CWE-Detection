@@ -1,4 +1,4 @@
-module Ex6(
+module Ex1(
     input wire clk,
     input wire reset,
 

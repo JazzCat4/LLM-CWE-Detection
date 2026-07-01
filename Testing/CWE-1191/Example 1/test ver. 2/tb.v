@@ -1,4 +1,4 @@
-`include "cwe1191_buggy.v"
+`include "Example1.v"
 `timescale 1ns/1ps
 
 module tb_jtag_debug_ctrl;
@@ -20,7 +20,7 @@ module tb_jtag_debug_ctrl;
     reg         lock_bit;
 
     // Instantiate DUT
-    jtag_debug_ctrl dut (
+    Ex1 dut (
         .clk             (clk),
         .rst_n           (rst_n),
         .dbg_en          (dbg_en),

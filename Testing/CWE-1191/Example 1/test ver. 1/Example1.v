@@ -1,6 +1,6 @@
 
 
-module jtag_debug_ctrl_buggy (
+module Ex1 (
     input  wire        clk,
     input  wire        rst_n,
 

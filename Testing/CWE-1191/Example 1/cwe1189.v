@@ -1,4 +1,10 @@
-module Ex2 (
+// https://cwe.mitre.org/data/definitions/1189.html
+
+// Two masters, (CPU_secure and Peripheral) share a memory block
+// Peripheral is supposed to be restricted
+// But module does not enforce any access control
+
+module cwe1189 (
     input wire clk,
     input wire reset,
 
@@ -17,8 +23,10 @@ module Ex2 (
     output reg [31:0] periph_rdata
 );
 
+// Shared memory resource
 reg [31:0] mem [0:255];
 
+// No priv. checks - both master get equal access
 reg turn; // 0 for CPU, 1 for Peripheral
 
 always @(posedge clk or posedge reset) begin
@@ -33,6 +41,7 @@ always @(posedge clk) begin
         cpu_rdata <= mem[cpu_addr];
     end else if (turn == 1'b1 && periph_req) begin
         // Peripheral access
+        // Pheripheral can read/wire ANY address, including secure regions
         if (periph_we) mem[periph_addr] <= periph_wdata;
         periph_rdata <= mem[periph_addr];
     end

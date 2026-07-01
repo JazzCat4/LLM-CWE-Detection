@@ -1,7 +1,7 @@
 // Testbench targeting CWE-1191, CWE-1234, CWE-1256 for jtag_debug_ctrl_buggy
 
 `timescale 1ns/1ps
-`include "cwe1191_buggy.v"
+`include "Example1.v"
 
 module tb_jtag_debug_ctrl_buggy;
 
@@ -17,7 +17,7 @@ module tb_jtag_debug_ctrl_buggy;
     wire [31:0] secret_key;
 
     // Instantiate DUT
-    jtag_debug_ctrl_buggy dut (
+    Ex1 dut (
         .clk             (clk),
         .rst_n           (rst_n),
         .dbg_en          (dbg_en),

@@ -1,6 +1,6 @@
 
 
-module jtag_debug_ctrl (
+module Example1 (
     input  wire        clk,
     input  wire        rst_n,
 

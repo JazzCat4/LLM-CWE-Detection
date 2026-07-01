@@ -1,5 +1,5 @@
 
-module Ex5(
+module Ex1(
     input wire clk,
     input wire reset,
 
