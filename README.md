@@ -19,7 +19,7 @@ Our methodology was designed through analysis of CWEs, previous works, and const
 
 <img width="1040" height="588" alt="Flow" src="https://github.com/user-attachments/assets/c60b714a-4af1-452e-b5ad-e9e287552014" />
 
-Given an RTL Design, the role and features of the module are first identified. The module is the module is then analyzed to determine important assets, behavior, data, and control flow. A CWE-driven review is then done utilzing the results of the analysis and module to identify potential vulnerabilties. A testbench is then created based off of potential / suspected vulnerabilities. The module is tested using the testbench, and reparied utilizing CWE-Design rules until the module passes simulation. 
+Given an RTL Design, the role and features of the module are first identified. The module is then analyzed to determine important assets, behavior, data, and control flow. A CWE-driven review is then done utilzing the results of the analysis and module to identify potential vulnerabilties. A testbench is then created based off of potential / suspected vulnerabilities. The module is tested using the testbench, and reparied utilizing CWE-Design rules until the module passes simulation.
 
 
 ## Identify Module
