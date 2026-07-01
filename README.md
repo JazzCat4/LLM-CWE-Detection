@@ -44,7 +44,7 @@ From these findings, a Program Dependency Graph is then created, modeling the be
 ## CWE-Driven Manual Review
 Utilizing the module, and the results from the analysis, a CWE-driven review is performed. CWE reviews are chosen based on suspected / potential CWEs determined from module / asset / behavior identification, and graph analysis. Each listed CWE contains a brief description of the vulnerability, questions to guide thinkg, common causes, and a checklist to aid in identification.
 
-### CWE-226 - Sensitive Information in Resource Not Removed Before Reuse
+### [CWE-226 - Sensitive Information in Resource Not Removed Before Reuse](https://cwe.mitre.org/data/definitions/226.html)
 Situations where a resource holding sensitive data is reassigned or reused without being cleared, potentially leaking secrets
 
 #### Core question to ask for sensitive registers:
@@ -62,7 +62,7 @@ Situations where a resource holding sensitive data is reassigned or reused witho
 -	Scrubs occur on ALL exit paths (error, timeout, normal release)
 -	Hardware scrubber completion is signaled before resource-free assertion
 
-### CWE-1189 - Improper Isolation of Shared Resources on System-on-a-Chip (SoC)
+### [CWE-1189 - Improper Isolation of Shared Resources on System-on-a-Chip (SoC)](https://cwe.mitre.org/data/definitions/1189.html)
 Shared resources accessible by multiple IP blocks or trust domains without proper isolation, allowing lower-trust agents to interfere with or observe high-trust agents’ data
 
 #### Core questions to ask:
@@ -82,7 +82,7 @@ Shared resources accessible by multiple IP blocks or trust domains without prope
 -	Shared resources are flushed / scrubbed on domain context switch
 -	All shared resources (memory, accelerators, buses) partitioned by trust domain have explicit access checks
 
-### CWE-1191 – On-Chip Debug/Test Interface with Improper Access Control
+### [CWE-1191 – On-Chip Debug/Test Interface with Improper Access Control](https://cwe.mitre.org/data/definitions/1191.html)
 Covers debug and test interfaces (e.g. JTAG) that are accessible without proper authentication or authorization checks
 
 #### Core questions to ask:
@@ -109,7 +109,7 @@ Covers debug and test interfaces (e.g. JTAG) that are accessible without proper 
 -	Scan chains cannot capture or shift security-critical register contents
 -	No debug signal reaches a locked register write path
 
-### CWE-1234 - Hardware Internal or Debug Modes Allow Override of Locks
+### [CWE-1234 - Hardware Internal or Debug Modes Allow Override of Locks](https://cwe.mitre.org/data/definitions/1234.html)
 Debug or test modes that, when activated, bypass or override security lock bits, undermining protections that were correctly implemented for normal operation.
 
 #### Core questions to ask:
@@ -132,7 +132,7 @@ Debug or test modes that, when activated, bypass or override security lock bits,
 -	Scan chains cannot capture or shift security-critical register contents
 -	No debug signal reaches a locked register write path
 
-### CWE-1247 - Improper Protection Against Voltage and Clock Glitches
+### [CWE-1247 - Improper Protection Against Voltage and Clock Glitches](https://cwe.mitre.org/data/definitions/1247.html)
 No detection or response logic for fault injection via voltage droops or clock anomalies, allowing an attacker to skip instructions, corrupt comparisons, or bypass security checks
 
 #### Core questions to ask:
@@ -150,7 +150,7 @@ No detection or response logic for fault injection via voltage droops or clock a
 -	FSM state encoding analyzed for glitch-reachable dangerous states
 -	Setup / hold violation detectors on security-critical flip-flops
 
-### CWE-1256 - Improper Restriction of Software Interfaces to Hardware Features
+### [CWE-1256 - Improper Restriction of Software Interfaces to Hardware Features](https://cwe.mitre.org/data/definitions/1256.html)
 Software-accessible registers or CSRs expose hardware features that should be privileged-only, but are reachable by unprivileged software.
 
 #### Core questions to ask:
@@ -169,7 +169,7 @@ Software-accessible registers or CSRs expose hardware features that should be pr
 -	No unprivileged software can reach hardware-only controls
 -	Separate address ranges for hardware-control vs software-status registers
 
-### CWE-1260 - Improper Handling of Overlap Between Protected Memory Ranges
+### [CWE-1260 - Improper Handling of Overlap Between Protected Memory Ranges](https://cwe.mitre.org/data/definitions/1260.html)
 Memory protection logic that has overlapping region definitions and resolves conflicts in an insecure way. Allows bypasses of intended protections
 
 #### Core questions to ask:
@@ -192,7 +192,7 @@ Memory protection logic that has overlapping region definitions and resolves con
 -	Tie-break / priority rule is documented and verified
 -	Default response for conflict is deny
 
-### CWE-1262 - Improper Access Control for Register Interface
+### [CWE-1262 - Improper Access Control for Register Interface](https://cwe.mitre.org/data/definitions/1262.html)
 Covers situations where hardware registers containing sensitive configuration, security settings, or privileged data can be read or written by untrusted software or hardware without proper access control checks.
 
 #### Core questions to ask:
@@ -216,7 +216,7 @@ Covers situations where hardware registers containing sensitive configuration, s
 -	Key / secret registers are write-only (mask reads / return 0s )
 -	Write-once lock bits gate all security configuration registers
 
-### CWE-1300 - Improper Protection of Physical Side Channels
+### [CWE-1300 - Improper Protection of Physical Side Channels](https://cwe.mitre.org/data/definitions/1300.html)
 RTL implementation leaks information through power consumption, EM emissions, or timing variation that correlates with secret data.
 
 #### Core questions to ask:
