@@ -25,7 +25,7 @@ Given an RTL Design, the role and features of the module are first identified. T
 ## Identify Module
 The role of the module and any potential features are first identified. These directly correspond to potential vulnerabilities, and are noted for identification.
 
-<img width="1178" height="265" alt="Screenshot 2026-06-30 103359" src="https://github.com/user-attachments/assets/7492367d-0e89-4a0e-877b-163cd67bf3a0" />
+<img width="1178" height="265" alt="Vulnerability Table" src="https://github.com/user-attachments/assets/7492367d-0e89-4a0e-877b-163cd67bf3a0" />
 
 ## Identify Assets and Behavior
 The module, its roles, and features are then analyzed to determine:
