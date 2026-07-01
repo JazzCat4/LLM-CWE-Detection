@@ -17,7 +17,8 @@ We created methodology to simplify the task of locating and fixing bugs for both
 
 Our methodology was designed through the analysis of CWE entries (MITRE, 2025), previous works, and constant testing, with the goal of providing an effective and efficient method to identify vulnerabilities that individuals with limited knowledge can utilize. We have limited our methodology and research to the listed CWEs on MITRE's 2025 Most Important Hardware Weaknesses list to target commonly seen vulnerabilities. 2 CWE entries on this list were omitted due to these vulnerabilities arising from microarchitectural design considerations. The figure below models the workflow of the methodology.
 
-<img width="1040" height="588" alt="CWE Detection Methodology Flowchart" src="https://github.com/user-attachments/assets/c60b714a-4af1-452e-b5ad-e9e287552014" />
+<img width="917" height="476" alt="CWE Detection Methodology Flowchart" src="https://github.com/user-attachments/assets/75bb6aa5-7993-4285-9308-ac51683d81b9" />
+
 
 Given an RTL Design, the role and features of the module are first identified. The module is then analyzed to determine important assets, behavior, data, and control flow. A CWE-driven review is then done utilzing the results of the analysis and module to identify potential vulnerabilties. A testbench is then created based off of potential / suspected vulnerabilities. The module is tested using the testbench, and reparied utilizing CWE-Design rules until the module passes simulation.
 
