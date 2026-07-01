@@ -1,0 +1,188 @@
+CWE-226 - Sensitive Information in Resource Not Removed Before Reuse
+Situations where a resource holding sensitive data is reassigned or reused without being cleared, potentially leaking secrets
+
+Core question to ask for sensitive registers:
+1.	Is there a guaranteed zero-write before this resource is reused or made accessible to another context?
+
+What to look for:
+1.	Registers reused without explicit reset: Look for registers that hold sensitive values that get reassigned or repurposed without a clearing step in between
+2.	FSM state transitions that skip a clear phase: Look for state machines that move from a “sensitive operation” state to an “idle/available” state without wiping intermediate registers
+3.	Memory/RAM blocks reused across security contexts: Look for shared RAM or register files where one “owner” finished and another begins with no explicit zeroing between allocations.
+4.	Reset logic that doesn’t cover sensitive registers: Check that async/sync reset paths explicitly clear sensitive registers, a partial reset is a common issue.
+5.	Power on/reinitialization sequence: Look for initialization blocks (initial) or power-cycle sequences that assume registers start at zero without explicitly assigning them.
+
+Checklist:
+-	All keys / secret buffers are zeroed before deallocation or context switch
+-	Scrubs occur on ALL exit paths (error, timeout, normal release)
+-	Hardware scrubber completion is signaled before resource-free assertion
+
+CWE-1189 - Improper Isolation of Shared Resources on System-on-a-Chip (SoC)
+Shared resources accessible by multiple IP blocks or trust domains without proper isolation, allowing lower-trust agents to interfere with or observe high-trust agents’ data
+
+Core questions to ask:
+1.	Are all shared resources partitioned by a trust domain with explicit access checks?
+2.	Do all bus transactions carry a master ID and security attribute that the logic validates?
+3.	Can a lower-privilege domain trigger a reset or clock gate that affects a higher-privilege domain?
+
+What to look for:
+1.	Shared memory with no access partitioning: Look for memory mux logic that selects between multiple masters without any checks.
+2.	Shared interrupt lines with no source isolation: Look for interrupt signals that OR together sources from different trust domains, a non-secure peripheral sharing a line with a secure one leaks activity timing to the non-secure world.
+3.	Shared bus with no transaction tagging: Look for bus transactions that carry no master ID, security attribute, or privilege level signal. Without tagging, no access control decisions can be made
+4.	Shared clock/reset domains across trust boundaries: Look for a single reset or clock-gate signal shared between secure and non-secure domains. A non-secure agent triggering a reset can disrupt or clear a secure domain’s state.
+
+Checklist:
+-	Every shared SRAM / cache bank has a domain tag or something similar
+-	Domain tags are hardware-assigned and not software-writable
+-	Shared resources are flushed / scrubbed on domain context switch
+-	All shared resources (memory, accelerators, buses) partitioned by trust domain have explicit access checks
+
+CWE-1191 – On-Chip Debug/Test Interface with Improper Access Control
+Covers debug and test interfaces (e.g. JTAG) that are accessible without proper authentication or authorization checks
+
+Core questions to ask:
+1.	Is debug access gated by more than one factor (e.g. lifecycle and authentication)?
+2.	Are sensitive registers excluded from scan chains (testing modes)
+3.	Does debug access have address/register range restrictions?
+4.	Is the debug interface properly disabled in production?
+5.	Are there any hardcoded credentials that unlock debug?
+6.	Are outputs being masked when appropriate? 
+
+What to look for:
+1.	JTAG/Debug ports with no authentication gate: Look for debug interfaces that become active based solely on a single unprotected pin or signal, with no credential checks
+2.	Debug/test modes controlled by fuse with no further checks: Watch for lifecycle signals that unlock debug with no secondary verification.
+3.	Scan chain exposure of sensitive registers: Check whether sensitive registers are directly included in scan chains without being excluded or obfuscated
+4.	Debug registers that allow arbitrary memory or CSR access: Look for debug backdoors that can read/write any address without range restrictions or privilege checks
+5.	Missing or by-passable authentication FSM: Look for authentication state machines that have weak transitions, reachable “authenticated” states without completing the full challenge-response sequence.
+6.	Debug interfaces active in production lifecycle states: Look for lifecycle/mode checks that do not properly disable debug in production/secure boot modes.
+7.	Hardcoded debug credentials: Scan for hardcoded passwords or keys used to unlock debug access
+
+Checklist:
+-	JTAG disabled via OTP fuse in production builds
+-	Authenticated unlock required even when debug fuse is not blown
+-	Debug mode cannot override lock bits, fuses, or MPU rules
+-	Scan chains cannot capture or shift security-critical register contents
+-	No debug signal reaches a locked register write path
+
+CWE-1234 - Hardware Internal or Debug Modes Allow Override of Locks
+Debug or test modes that, when activated, bypass or override security lock bits, undermining protections that were correctly implemented for normal operation.
+
+Core questions to ask:
+1.	Does any debug, test, or scan mode signal appear as an alternative condition on a lock-protected write path?
+2.	Can scan_rst, test_rst, or any externally controllable reset clear a lock bit register?
+3.	Are there JTAG instructions that write to registers without checking the corresponding lock bit?
+4.	Can a lifecycle downgrade transition zero out lock bits that were set during a prior lifecycle state?
+5.	Are there any shadow or alternate write paths to sensitive registers that bypass lock enforcement?
+
+What to look for:
+1.	Debug mode unconditionally overrides a lock bit: Look for write-enable logic where debug_mode is OR’d in as an alternative condition, effectively making the lock bit irrelevant whenever debug is active
+2.	Test/scan mode clears or resets lock registers: Look for scan or test reset signals that drive lock bit registers to zero. An attacker who can assert scan_rst can clear any lock and regain write access to protected registers
+3.	JTAG instruction that directly writes locked registers: Look for JTAG data register instructions that write directly to security-critical registers without consulting the corresponding lock bit, the JTAG command becomes a lock bypass.
+4.	Lifecycle downgrade re-enabling locks that were set: Look for lifecycle transitions back to a development state that zero out lock registers, allowing attackers to deliberately downgrade lifecycles to clear locks set in production
+5.	Shadow registers in debug mode that bypass lock enforcement: Look for mux-style assignments where debug_mode selects a direct write path to a sensitive registers, completely bypassing the lock-checked normal write path
+
+Checklist: 
+-	Authenticated unlock required even when debus fuse is not blown
+-	Debug mode cannot override lock bits, fuses, or MPU rules
+-	Scan chains cannot capture or shift security-critical register contents
+-	No debug signal reaches a locked register write path
+
+CWE-1247 - Improper Protection Against Voltage and Clock Glitches
+No detection or response logic for fault injection via voltage droops or clock anomalies, allowing an attacker to skip instructions, corrupt comparisons, or bypass security checks
+
+Core questions to ask:
+1.	Are there any security-critical comparisons protected by redundant checks across multiple cycles or logic cones?
+2.	Is there a clock frequency monitor or reference oscillator comparison that detects out-of-range clock speeds?
+3.	Do retry counters use saturating arithmetic and is the lockout condition checked in a glitch-resistant way?
+
+What to look for:
+1.	Single-cycle security decisions with no redundancy: Look for authentication or access grant logic that resolves in a single clock cycle with no redundant check. A precisely timed clock glitch on that cycle can cause the comparison to be skipped.
+2.	Security-critical counters or FSMs with no error state: Look for retry counters or lockout FSMs where the increment and threshold check happen in a way that a glitch on a single cycle can prevent the counter from reaching its lockout value.
+3.	No voltage/clock glitch detection registers or interrupts: Look for a complete absence of any glitch_detected, brownout_detected, or freq-error signal in the design. Without detection, there is no response path even if the silicon has glitch sensors
+
+Checklist:
+-	Voltage / frequency monitors present with lockdown on violation
+-	FSM state encoding analyzed for glitch-reachable dangerous states
+-	Setup / hold violation detectors on security-critical flip-flops
+
+CWE-1256 - Improper Restriction of Software Interfaces to Hardware Features
+Software-accessible registers or CSRs expose hardware features that should be privileged-only, but are reachable by unprivileged software.
+
+Core questions to ask:
+1.	Are all registers that control clocks, resets, and power domains gated behind a privilege level check?
+2.	Can unprivileged software write DMA source, destination, or size registers that could redirect transfers into secure memory?
+3.	Do any registers mix unprivileged and privileged fields at the same address without per-field access control?
+
+What to look for:
+1.	Power / clock control registers with no privilege gate: Look for registers that control clock gating, power domain switching, or IP resets that can be written by any bus master without a privilege level check. Unprivileged software can deny service to other components
+2.	DMA configuration accessible without privilege check: Look for DMA source, destination, and size registers writable without privilege gating. Unprivileged software can reprogram DMA to read from or write to secure memory regions
+3.	Hardware feature enable bits in mixed-privilege registers: Look for registers that pack both unprivileged fields and dangerous privileged fields into the same address. A full width write by unprivileged software modifies both
+
+Checklist:
+-	All hardware control registers (clocking, power, remapping) are privilege-gated
+-	Hardware control registers are locked after boot configuration
+-	No unprivileged software can reach hardware-only controls
+-	Separate address ranges for hardware-control vs software-status registers
+
+CWE-1260 - Improper Handling of Overlap Between Protected Memory Ranges
+Memory protection logic that has overlapping region definitions and resolves conflicts in an insecure way. Allows bypasses of intended protections
+
+Core questions to ask:
+1.	When two regions definitions overlap, does the hardware apply the most restrictive or least restrictive policy?
+2.	Is there a defined and verified priority order for region checks, and does more secure always beat less secure?
+3.	Are boundary conditions (< vs <=) consistent and verified at every region edge to eliminate gaps or double-coverage?
+4.	For software-programmable regions, is there hardware logic that detects and rejects overlapping region definitions?
+5.	Does any conflict resolution logic default to ALLOW rather than DENY?
+
+What to look for:
+1.	Overlapping ranges resolved by “most permissive wins”: Look for access_ok logic that OR’s together multiple region hit signals. If a less restrictive region overlaps a more restrictive one, the OR means the open region’s permissions with for addresses in the overlap zone.
+2.	Priority encoding that favors lower-security regions: Look for loop-based region checks where later iterations overwrite earlier results. If lower-security regions are checked last, they can override higher-security decisions for overlapping addresses.
+3.	Off-by-one errors in range bounder checks: Look for boundary conditions using < vs <= inconsistently across adjacent regions. A signal address at the exact boundary may fall into the wrong region or into an unprotected gap between regions.
+4.	Region size computed dynamically without overlap detection: Look for software-programmable regions where the top address is computed as base + size at runtime with no hardware logic to detect or reject overlaps with existing protected regions.
+5.	Attribute conflict resolution defaulting to permissive: Look for explicit overlap detection logic that resolves the conflict by granting access. The safe default for any ambiguous or confliction region match should always be deny.
+
+Checklist:
+-	No two regions produce conflicting permissions for any address
+-	Hardware detects overlapping region configurations
+-	Tie-break / priority rule is documented and verified
+-	Default response for conflict is deny
+
+CWE-1262 - Improper Access Control for Register Interface
+Covers situations where hardware registers containing sensitive configuration, security settings, or privileged data can be read or written by untrusted software or hardware without proper access control checks.
+
+Core questions to ask:
+1.	Is every sensitive register protected, or just a subset?
+2.	Are lock bits set-only, and checked on every write path?
+3.	Are privilege/trust signals hardware-derived, and not software-writable?
+4.	Is the access policy default-deny rather than default-allow?
+5.	Are both read and write paths protected?
+
+What to look for:
+1.	No privilege/trust level check on register writes: Look for register write logic that accepts writes from any bus master without checking the requester’s privilege level
+2.	Missing read access control on sensitive registers: Look for register read paths that return sensitive data regardless of who is requesting it
+3.	Trust/privilege signals that are software-controllable: Look for privilege or trust signals that can be set by software rather than begin hardware-derived from a trusted source
+4.	Lock bits that are never enforced/Unused inputs: Look for registers that have a defined lock bit in the spec., but the lock is never actually checked/used, or variables (such as a priv. level) that are never used/checked.
+5.	Lock bits that can be cleared after being set: Even when the lock bit is checked, ensure that they can only transition one way, and cannot be unlocked once set.
+6.	No access control on range of registers, only spot checks: Look for decoders that protect a few specific addresses but leave neighboring addresses in a sensitive block unprotected
+7.	Default-open access policy: Look for access control logic structed as “deny specific addresses” rather than “allow specific addresses”, a missing entry means open access.
+
+Checklist:
+-	All security CSRs have hardware privilege-check logic on write paths.
+-	Key / secret registers are write-only (mask reads / return 0s )
+-	Write-once lock bits gate all security configuration registers
+
+CWE-1300 - Improper Protection of Physical Side Channels
+RTL implementation leaks information through power consumption, EM emissions, or timing variation that correlates with secret data.
+
+Core questions to ask:
+1.	Do any combinational paths have switching activity that is statistically correlated with secret key bits?
+2.	Are there any branches, mux selections, or operand choices controlled directly by secret data?
+3.	Are all secret comparisons constant-time with no early exit paths?
+
+What to look for:
+1.	Secret-dependent branching or operand selection: Look for if/case statements that select different operations, datapaths, or operands based on a secret bit. Different branches have different power profiles and propagation delays, leaking the secret through timing or power.
+2.	Non-constant-time comparison for authentication: Look for comparison loops with early-exit break conditions. The number of cycles taken before failure reveals how many bytes of the secret matched the input, enabling byte-at-a-time attacks.
+
+Checklist:
+-	All key-dependent logic uses mux (not if/case) for selection
+-	No early-exit in crypto loops or comparators
+-	Timing of key-dependent operations is data-independent

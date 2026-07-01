@@ -1,0 +1,45 @@
+CWE-226 - Sensitive Information in Resource Not Removed Before Reuse
+1.	After a resource (memory, register, buffer) is released and reallocated, verify the new owner cannot read prior contents by writing a known pattern. 
+2.	Confirm data is zeroed or overwritten before new access.
+3.	Testbench should check that any important data is removed from the circuit before any transitions.
+
+CWE-1189 - Improper Isolation of Shared Resources on System-on-a-Chip (SoC)
+1.	On shared SoC buses/memory, verify one IP block cannot read/write another’s protected regions. 
+2.	Test that untrusted software is denied access to secure memory and registers.
+3.	Testbench should ensure that trusted and untrusted users have separate resources (wires, registers, etc.)
+
+CWE-1191 – On-Chip Debug and Test Interface With Improper Access Control
+1.	Confirm JTAG/debug interfaces are disabled or require authentication in production mode. 
+2.	Attempt debug register reads/writes without credentials to verify denial. 
+3.	Test that debug mode cannot be re-enabled from unprivileged software.
+4.	Testbenches should properly check permissions of the user and reject/hide important resources from them if they do not have sufficient permissions.
+
+CWE-1234 - Hardware Internal or Debug Modes Allow Override of Locks
+1.	Set a lock bit, then attempt to override it by entering debug or test mode. 
+2.	Verify lock persists across mode transitions. 
+3.	Confirm debug modes cannot write to registers that were locked in normal operation.
+4.	Testbenches should ensure that only authorized users can use debug mode or ensure that debug mode signals do not interfere with reset logic.
+
+CWE-1247 - Improper Protection Against Voltage and Clock Glitches
+1.	Apply out-of-spec voltage or clock frequency stimuli. 
+2.	Verify the design has glitch detection logic that triggers a lockout or reset.
+3.	Testbenches should ensure that no abnormal changes occur in the event of a clock/voltage glitch (clock stops moving or skips a few seconds, etc.)
+
+CWE-1256 - Improper Restriction of Software Interfaces to Hardware Features
+1.	Verify that software-accessible interfaces cannot directly manipulate hardware features that should be hardware-only.
+2.	Testbenches should check that software interfaces will have no effect on hardware-exclusive functions.
+
+CWE-1260 - Improper Handling of Overlap Between Protected Memory Ranges
+1.	Define two overlapping protected memory ranges and test what happens at the overlap boundary. 
+2.	Verify the stricter policy wins. 
+3.	Check that address +-1 around boundaries enforces the correct permission and no region is accidentally unprotected.
+4.	Testbenches should check that the memory addresses between the two protected memory ranges don’t overlap with each other.
+
+CWE-1262 - Improper Access Control for Register Interface
+1.	Test that privilege level cannot be self-elevated via a register write: De-escalate only
+2.	From unprivileged mode, attempt to read and write to every register. Confirm privileged registers are not writable.
+
+CWE-1300 - Improper Protection of Physical Side Channels
+1.	Measure whether operations on secret data produce distinguishable timing or power signatures. 
+2.	Test that encryption/decryption of different keys takes a constant number of cycles.
+3.	Testbenches should ensure that the circuit does perform any actions that allow users to guess what it is doing (calculations, character by character comparisons, etc.)

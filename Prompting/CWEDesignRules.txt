@@ -1,0 +1,47 @@
+CWE-226 - Sensitive Information in Resource Not Removed Before Reuse
+1.	Zero-fill or overwrite all memory, registers, and storage before releasing / reassigning resources, and on reset.
+2.	During critical state transitions, information not needed in the next state should be removed or overwritten with fixed patterns (such as 0’s), before the transition to the next state
+3.	Validate scrubbing is complete before reusing resources
+4.	Overwrite cryptographic keys immediately after use.
+
+CWE-1189 - Improper Isolation of Shared Resources on System-on-a-Chip (SoC)
+1.	Enforce hardware access control at every shared resource
+2.	When sharing resources, avoid mixing agents of varying trust levels. Untrusted agents should not share resources with trusted agents.
+3.	Shared resources are flushed / scrubbed on domain context switch
+
+CWE-1191 – On-Chip Debug and Test Interface With Improper Access Control
+1.	Disable or permanently fuse-off debug interfaces (e.g. JTAG) in production silicon if possible, or implement authentication and authorization for the debug interfaces
+2.	Debug mode cannot override lock bits, fuses, or MPU rules
+3.	Limit debug visibility to non-sensitive registers. Important registers must never be exposed via debug paths. Security-sensitive data stored in registers should be cleared when entering debug mode
+
+CWE-1234 - Hardware Internal or Debug Modes Allow Override of Locks
+1.	Security lock bit protections should be reviewed for any bypass/override modes supported
+2.	Design lock registers as a one-time programmable fuse
+3.	Never allow a debug authentication to bypass lock evaluations
+4.	Ensure that no combination of debug inputs can override lock state
+
+CWE-1247 - Improper Protection Against Voltage and Clock Glitches
+1.	Utilize an input from a glitch detector that overrides all operations to force a safe state (Error).
+2.	Use multi-bit encodings instead of a single bit, as a glitch is highly unlikely to perfectly flip bits into exact configurations.
+3.	Use defensive default states: If a glitch forces state machine registers into an undefined state, the system should default to an error state rather than failing open
+
+CWE-1256 - Improper Restriction of Software Interfaces to Hardware Features
+1.	Map security-sensitive hardware features to privilege-gated registers. Unprivileged software must receive a fault on access
+2.	If needed, apply whitelisting only; Allow access to certain software instead of denying access to others
+3.	Block unauthorized software from enabling security-sensitive features
+4.	Ensure proper access control mechanisms protect software-controllable features altering physical operating conditions such as clock frequency and voltage
+
+CWE-1260 Improper Handling of Overlap Between Protected Memory Ranges
+1.	Ensure that memory regions are isolated as intended and that access control (read/write) policies are used by hardware to protect privileged software
+2.	Detect overlapping addresses at the beginning and end of address space
+3.	Default response for conflict is deny
+
+CWE-1262 - Improper Access Control for Register Interface
+1.	Assign explicit read/write permissions per privilege level for every register
+2.	Default all security-sensitive registers to deny access
+3.	Separate readable and writable permissions
+
+CWE-1300 - Improper Protection of Physical Side Channels
+1.	Implement constant-time algorithms for all cryptographic operations
+2.	All key-dependent logic uses mux (not if/case) for selection
+3.	Apply blinding or masking techniques to implementations of cryptographic algorithms
