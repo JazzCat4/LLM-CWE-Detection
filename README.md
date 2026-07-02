@@ -61,15 +61,15 @@ Utilizing the module and the results from the analysis, a CWE-driven review is p
 
 CWE guides are chosen based on suspected / potential CWEs determined from module / asset / behavior identification, and graph analysis results. The CWE guides were developed through analysis of their respective CWE entries, including their common causes, and identification methods, with the goal of including common scenarios where these vulnerabilities may occur. The AI model is only given relevant CWE guides based off of its previous findings as to not overwhelm the AI model with too many instructions that may potentially degrade performance. Each listed CWE contains a brief description of the vulnerability, questions to guide thinking, common causes of the vulnerability, and a checklist to aid in their identification. The AI models returns a list of its found vulnerabilities with its corresponding CWE entry, along with a description of the issue in the module. These results are then used to generate a testbench to verify these vulnerabilities.
 
-The complete list of CWE guides can be found in the prompting directy of this repository.
+The complete list of CWE guides can be found in the prompting directory of this repository.
 
 ## 3.5 Testbench Generation
 Utilizing the previously found vulnerabilities, a testbench for the RTL design is created. The AI model is given the RTL design, the found vulnerabilities (if any), and a list of CWE secure design rules, and is instructed to generate a testbench that targets all found vulnerabilities and the validity of the given secure design rules for each CWE. Similar to the CWE guides, a list of CWE design rules were created for each CWE. These design rules were developed through analysis of their corresponding CWE entries, including their mitigation methods, and common mistakes that lead to these vulnerabilities. All testbench tests should be reviewed for potential errors, as a false pass / fail may negatively impact performance and code repair.
 
-The complete list of CWE design rules can be found in the prompting directy of this repository.
+The complete list of CWE design rules can be found in the prompting directory of this repository.
 
 ## 3.6 Simulation
-The generated testbench is then compiled and ran to test the given RTL design under the generated tests. If all tests passes, the given RTL module passes inspection, and all testing and analysis is completed. If one of more tests fail, the RTL design will then undergo a code repair (3.7).
+The generated testbench is then compiled and ran to test the given RTL design under the generated tests. If all tests pass, the given RTL module passes inspection, and all testing and analysis is completed. If one of more tests fail, the RTL design will then undergo a code repair (3.7).
 
 ## 3.7 Code Repair
 Utilizing the results from the simulation, the RTL design will undergo code repair. The AI model is given the RTL design, all failed testbench tests, and the list of CWE design rules. The AI model is instructed to fix the module based off of the failed tests from the testbench simulation, while utilzing the CWE design rules as a guide for code repair. The AI model is also instructed to generate an updated testbench if changes to the RTL design were made that make it imcompatible to the previously generated testbench (e.g. a new input). Once the fixed module (and potentially updated testbench) is generated, the simulation step is repeated (3.6) testing the repaired RTL design.
