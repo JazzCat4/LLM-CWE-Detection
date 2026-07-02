@@ -1,0 +1,67 @@
+Module types identified: Debug/JTAG/test interface, Register file/CSR, clock/reset logic
+CWEs to review: 1191, 1234, 1256, 226, 1262, 1247
+
+Asset identification:
+Asset: sensitive register secure_reg
+Asset: lock bit lock
+Privilege boundary: normal systems vs protected register
+Privilege boundary: debug interface vs protected register
+Privilege boundary: external control vs internal lifecycle (reset)
+Clock behavior
+reset schemes
+Adversary capability: debug interface control
+Adversary capabilities: system write control, reset manipulation
+Security rules: Lock-based restriction on system writes, debug override of lock and secure_reg, default locked state on reset
+
+Graph analysis results:
+Reachability
+secure_reg is reachable from both system and debug inputs.
+
+lock is reachable only from debug and reset.
+
+Debug interface can reach and override all sensitive state.
+
+Dominance
+reset dominates initial state.
+
+dbg_mode dominates all debug operations.
+
+dbg_cmd == AA dominates unlocking.
+
+dbg_cmd == BB dominates debug writes.
+
+!lock dominates system writes.
+
+Debug unlock dominates system write capability.
+
+Taint Propagation
+dbg_wdata taints secure_reg directly.
+
+dbg_cmd taints lock and indirectly taints secure_reg.
+
+sys_wdata taints secure_reg once lock is cleared.
+
+dbg_mode enables taint flow into both sensitive registers.
+
+No sanitization or privilege checks exist anywhere.
+
+CWE-Driven review: NOTE: Removed all checklists due to character limit
+
+
+Testbench generation: Generated showcasing all vulnerabilities
+
+Simulation: All tests failing (good)
+
+
+CODE REPAIR KEY FIXED:
+CWE-1191: Debug interface now requires dbg_auth_ok and dbg_lifecycle_dev; raw dbg_mode_req alone cannot enable debug. Debug has no write access to secure_reg or lock.
+
+CWE-1234: Debug can no longer clear or override lock; there is no shadow write path to secure_reg.
+
+CWE-1256 / 1262: System writes are gated by sys_priv, and lock is enforced on all write paths. Lock is effectively one-way (can be set, but not cleared by debug or unprivileged writes).
+
+CWE-226: secure_reg is cleared on reset and when a glitch is detected; reuse happens only after explicit clearing.
+
+CWE-1247: glitch_detected forces a safe state (secure_reg = 0, lock = 1), preventing open failure under faults.
+
+After new TB generation, all tests passing!
