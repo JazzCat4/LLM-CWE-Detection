@@ -72,7 +72,7 @@ The complete list of CWE design rules can be found in the prompting directory of
 The generated testbench is then compiled and ran to test the given RTL design under the generated tests. If all tests pass, the given RTL module passes inspection, and all testing and analysis is completed. If one of more tests fail, the RTL design will then undergo a code repair (3.7).
 
 ## 3.7 Code Repair
-Utilizing the results from the simulation, the RTL design will undergo code repair. The AI model is given the RTL design, all failed testbench tests, and the list of CWE design rules. The AI model is instructed to fix the module based off of the failed tests from the testbench simulation, while utilzing the CWE design rules as a guide for code repair. The AI model is also instructed to generate an updated testbench if changes to the RTL design were made that make it imcompatible to the previously generated testbench (e.g. a new input). Once the fixed module (and potentially updated testbench) is generated, the simulation step is repeated (3.6) testing the repaired RTL design.
+Utilizing the results from the simulation, the RTL design will undergo code repair. The AI model is given the RTL design, all failed testbench tests, and the list of CWE design rules. The AI model is instructed to fix the module based off of the failed tests from the testbench simulation, while utilzing the CWE design rules as a guide for code repair. The AI model is also instructed to generate an updated testbench if changes to the RTL design were made that make it incompatible to the previously generated testbench (e.g. a new input). Once the fixed module (and potentially updated testbench) is generated, the simulation step is repeated (3.6) testing the repaired RTL design.
 
 # 4. Results
 
