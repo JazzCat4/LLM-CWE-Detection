@@ -1,0 +1,45 @@
+List of potential CWEs to include in research in the future
+Overall, most seem like potential good additions. If implemented, may be wise to group related CWEs together to perform a single review based on grouping instead of multiple related reviews.
+
+CWE 1231: Improper Prevention of lock bit modification:
+Product uses a trusted lock bit for restricting access to registers, address regions, or other resources, but the product does not prevent the value of the lock bit from being modified after it has been set.
+Notes: Similar to CWE 1234, could be present in single module designs
+
+CWE 1232: Improper lock behavior after power state transition:
+Register lock bit protection disables changes to system configuration once the bit is set. Some of the protected registers or lock bits become programmable after power state transitions (e.g., Entry and wake from low power sleep modes) causing the system configuration to be changeable. 
+Notes: Somewhat similar to 1234 (included in methodology), and 1231, having to do with illegal lock bit modification / behavior, could be present in single module designs.
+
+
+CWE 1243: Sensitive Non-Volatile Information Not Protected during debug:
+Access to security-sensitive information stored in fuses is not limited during debug
+Notes: Related to both 1191 and 1234 in terms of debug modes. Could be present in single module designs
+
+CWE 1244: Internal Asset exposed to Unsafe Debug Access Level or State:
+The product uses physical debug or test interfaces with support for multiple access levels, but it assigns the wrong debug access level to an internal asset, providing unintended access to the asset from untrusted debug agents.
+Notes: Could be present in single module designs, however may not be very common/feasible due to requiring a debug mode with different levels of authority
+
+
+CWE 1245: Improper Finite State Machines (FSMs) in Hardware Logic:
+Faulty finite state machines (FSMs) in the hardware logic allow an attacker to put the system in an undefined state, to cause a denial of service (DoS) or gain privileges on the victim's system.
+Notes: Very applicable, and could be easy to implement into research
+
+
+CWE 1255: Comparison Logic is Vulnerable to Power Side-Channel Attacks:
+The power consumed by a device may be instrumented and monitored in real time. If the algorithm for evaluating security tokens is not sufficiently robust, the power consumption may vary by token entry comparison against the reference value. Further, if retries are unlimited, the power difference between a "good" entry and a "bad" entry may be observed and used to determine whether each entry itself is correct thereby allowing unauthorized parties to calculate the reference value.
+Notes: Very similar to CWE 1300, may be redundant to include, very specific on power usage, may be difficult to detect in current framework
+
+
+CWE 1258: Exposure of Sensitive System Information Due to Uncleared Debug Information:
+The hardware does not fully clear security-sensitive values, such as keys and intermediate values in cryptographic operations, when debug mode is entered.
+Notes: Could be a good fit and easy to implement, and could simplify review for CWE 1191
+
+
+CWE-1271: Uninitialized Value on Reset for Registers Holding Security Settings:
+Security-critical logic is not set to a known value on reset.
+Notes: Similar to CWE 226, could simplify/clarify review for CWE 226, and this CWE would be easy to implement
+
+CWE-1280: Access Control Check Implemented After Asset is Accessed:
+A product's hardware-based access control check occurs after the asset has been accessed.
+Notes: Good fit, however unsure if this is something that we may come across in single-module designs
+
+
