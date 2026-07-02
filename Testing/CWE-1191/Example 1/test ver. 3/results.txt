@@ -1,0 +1,55 @@
+Type Classification: Debug / Jtag / test interface, Register file / CSR
+Potential CWEs: 1191, 1234, 1256, 226, 1262
+
+Asset identification: Identified secret keys, priv. levels, debug, priv. domain boundaries and crossing, clock behavior and scheme, adversary capabilities, missing security rules
+
+Graph analysis: Untrusted debug inputs can reach, dominate, and taint all critical assets (secret key, privilege bits, status), and can freely read them back via the same interface.
+
+Vulnerabilities:
+
+CWE-226 – Sensitive Information in Resource Not Removed Before Reuse
+
+V1: secret_key_reg is never zeroized; on reset it is loaded with a fixed nonzero value 32'hDEADBEEF instead of being cleared. This means the key resource is reused with a predictable value rather than scrubbed.
+
+V2: There is no path that clears secret_key_reg before it is made readable via dbg_rdata—the same register is reused across contexts (reset, debug, normal operation) without a guaranteed zero-write.
+
+V3: Reset logic does not scrub sensitive data; it initializes but never wipes secret_key_reg, and there is no hardware scrubber or completion signaling before the key becomes accessible.
+
+CWE-1262 – Improper Access Control for Register Interface
+
+V4: secret_key_reg is fully readable and writable via the debug interface (dbg_en, dbg_wr, dbg_addr == 4'h0) with no privilege or trust check on either read or write paths.
+
+V5: privilege_reg (which encodes user/root privilege) is directly writable from dbg_wdata[1:0] at dbg_addr == 4'h1, allowing untrusted debug masters to arbitrarily set privilege level—privilege is software/debug‑controlled, not hardware‑derived.
+
+V6: Access policy is default-allow: any active debug session (dbg_en == 1) can read/write sensitive registers; there is no default-deny gating, lock bits, or range restriction.
+
+V7: There are no write-once lock bits or hardware privilege-check logic protecting secret_key_reg, privilege_reg, or status_reg; both read and write paths are unprotected.
+
+CWE-1256 – Improper Restriction of Software Interfaces to Hardware Features
+
+V8: privilege_reg—a hardware-only control of privilege level—is exposed as a software/debug-writable register, allowing unprivileged software or external debug agents to reach hardware-only privilege controls.
+
+V9: The same debug address space mixes highly privileged fields (secret_key_reg, privilege_reg) with general status (status_reg) without per-field access control; a full-width write from an untrusted source can modify privileged fields.
+
+V10: There is no separation of address ranges for hardware-control vs software-status registers; all are in the same small CSR block and equally accessible via debug.
+
+CWE-1234 – Hardware Internal or Debug Modes Allow Override of Locks
+
+V11: Debug mode (dbg_en) acts as an unconditional gate to write secret_key_reg and privilege_reg; if any lock or privilege mechanism existed elsewhere, this debug path would bypass it. In this design, debug is effectively a shadow write path with no lock enforcement.
+
+V12: Reset (rst_n) can reinitialize sensitive registers, but there are no lock bits or lifecycle states that survive reset—an attacker who can assert reset and then use debug can freely reconfigure keys and privilege after reset.
+
+V13: The debug read/write paths are direct and do not consult any lock or lifecycle signals, meaning any future lock bits or MPU rules could be silently overridden by this interface.
+
+CWE-1191 – On-Chip Debug/Test Interface with Improper Access Control
+
+V14: The JTAG/debug interface is enabled solely by dbg_en, an unprotected external input; there is no authentication, no lifecycle gating, no fuse check, and no challenge-response FSM.
+
+V15: Debug can read and write all sensitive registers (secret key, privilege, status) with no address range restriction beyond simple decoding; the interface functions as a broad backdoor CSR access path.
+
+V16: Sensitive registers (secret_key_reg, privilege_reg) are directly exposed on the debug read path (dbg_rdata) without masking or obfuscation; outputs are not masked in any mode.
+
+V17: There is no mechanism to disable or lock debug in production—no OTP fuse, no lifecycle state, no hardware kill switch—so the debug interface remains a permanent attack surface.
+
+
+Results: Fixed module passed all tests, test bench generated not super clear but still good
