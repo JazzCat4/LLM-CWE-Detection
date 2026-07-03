@@ -1,0 +1,47 @@
+TYPE CLASSIFICATION
+Module types: register file / CSR, clock / power/ reset logic
+Minorly related: Crypto accelerator due to secret-data handling overlap with related cwes
+CWEs selected by AI: 1262, 1256, 226, 1234, 1247
+
+ASSET IDENTIFICATION
+Important assets: secret key register, config register, status register, priv. level, request signal, external datapath (write/read)
+boundaries between priv. domains: on/offchip interfaces, priv.unpriv. domains
+clock behavior and reset: active-low reset, no explicit reset behavior that scrubs or re-initializes reg-skey or reg-conf on reset
+adversary capabilities: drive external inputs (toggle req), manipulate clock and reset, observe outputs
+security rules: priv rule for config reg, request gating, identified missing rules on reg_skey, no lock bits
+
+DEPENDENCY GRAPH ANALYSIS
+Reachability: Untrusted write_data is reachable to read_data via REG-SKEY. Priv. and request signals provide only partial gating and do not prevent this path
+Dominance: req, clk, and reset dominate all state changes. REG_SKEY dominates any non-zero read_data. Observing read_data effective reveals REG_SKEY
+Taint: Taint from write_data flows into both REG_SKEY and REG_CONF, and then out of the module via read_data. Privilege (priv_lvl) only constrains REG_CONF, leaving REG_SKEY fully exposed to untrusted control and data, making the secret key asset completely tainted and externally observable.
+
+CWE DRIVEN REVIEW
+CWE 1262:
+Unprotected secret register
+Default-open policy
+partial protection only
+software-controllable priv. input (likely)
+Missing read access control
+CWe 1256:
+sensitive hardware feature expose to unprivileged software
+Mixed-privilege behavior
+CWE 226:
+No reset scrubbing of secret key
+Registers retain sensitive data across reset
+No explicit zero-write before reuse
+1234: NONE FOUND
+1247
+Single-cycle security decision
+No glitch detection or response
+Security-critical state updates unprotected
+
+TEST BENCH GENERATION
+Test bench showed failed tests (expected)
+
+CODE REPAIR
+New module and test bench, overall good
+Added:
+Enforces privilege checks on all sensitive registers
+uses default-deny access and write-once lock bits
+scrubs secrets on reset and on glitch detection
+never exposes the secret key on the read path

@@ -1,3 +1,5 @@
+Now, generate a testbench to validate the found vulnerabilities. Utilize the CWE design guides below to also test validity of the module.
+
 CWE-226 - Sensitive Information in Resource Not Removed Before Reuse
 1.	Zero-fill or overwrite all memory, registers, and storage before releasing / reassigning resources, and on reset.
 2.	During critical state transitions, information not needed in the next state should be removed or overwritten with fixed patterns (such as 0’s), before the transition to the next state
