@@ -20,17 +20,17 @@ According to a survey by Liu et al. (2026), the three main challenges of LLMs in
 Our methodology hopes to build on the idea of VerilogLAVD by analyzing hardware CWEs to allow both people and fine-tuned LLMs to better understand and reiteratively improve on their Verilog RTL code to minimize the number of possible exploits within circuits.
 # 3. Methodology
 
-Our methodology was designed through the analysis of CWE entries (MITRE, 2025), previous works, and iterative testing with the goal of providing an effective and efficient method to identify vulnerabilities that individuals with limited knowledge can utilize. We have limited our methodology and research to the listed CWEs on MITRE's 2025 Most Important Hardware Weaknesses list to target commonly seen vulnerabilities. 2 CWE entries on this list were omitted due to these vulnerabilities arising from microarchitectural design considerations.
+Our methodology was designed through the analysis of CWE entries (MITRE, 2025), previous works, and iterative testing with the goal of providing an effective and efficient method to identify vulnerabilities that individuals with limited knowledge can utilize. We have limited our methodology and research to the listed CWEs on MITRE's 2025 Most Important Hardware Weaknesses list to target commonly seen vulnerabilities. Two CWE entries on this list (CWE-1421 and CWE-1423) were omitted due to these vulnerabilities arising from microarchitectural design considerations.
 ### Complete list of CWEs:
-- 226: Sensitive Information in Resource Not Removed Before Reuse
-- 1189: Improper Isolation of Shared Resources on System-on-a-Chip (SoC)
-- 1191: On-Chip Debug and Test Interface With Improper Access Control
-- 1234: Hardware Internal or Debug Modes Allow Override of Locks
-- 1247: Improper Protection Against Voltage and Clock Glitches
-- 1256: Improper Restriction of Software Interfaces to Hardware Features
-- 1260: Improper Handling of Overlap Between Protected Memory Ranges
-- 1262: Improper Access Control for Register Interface
-- 1300: Improper Protection of Physical Side Channels
+- CWE-226: Sensitive Information in Resource Not Removed Before Reuse
+- CWE-1189: Improper Isolation of Shared Resources on System-on-a-Chip (SoC)
+- CWE-1191: On-Chip Debug and Test Interface With Improper Access Control
+- CWE-1234: Hardware Internal or Debug Modes Allow Override of Locks
+- CWE-1247: Improper Protection Against Voltage and Clock Glitches
+- CWE-1256: Improper Restriction of Software Interfaces to Hardware Features
+- CWE-1260: Improper Handling of Overlap Between Protected Memory Ranges
+- CWE-1262: Improper Access Control for Register Interface
+- CWE-1300: Improper Protection of Physical Side Channels
 
 Given an RTL Design, the role and features of the module are first identified. The module is then analyzed to determine important assets, behavior, data, and control flow. A CWE-driven review is then done utilzing the results of the analysis and module to identify potential vulnerabilties. A testbench is then created based off of potential / suspected vulnerabilities. The module is tested using the testbench, and reparied utilizing CWE-Design rules until the module passes simulation.
 
