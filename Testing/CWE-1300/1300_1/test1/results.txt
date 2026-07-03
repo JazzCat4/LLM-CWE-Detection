@@ -1,0 +1,47 @@
+TYPE CLASSIFICATION
+Module types / features: Clock/power/reset logic, Crypto accelerator (Both correct)
+associated CWEs: 1247, 1234, 1300, 226
+Note: AI offered to identify actual vulnerabilities in the model, saying there are a few
+
+ASSET IDENTIFICATION
+Important assets: Secret key, intermediate result variable, output data
+Boundaries between priv. domains: internal vs external boundary for registers
+Clock behavior and reset: On reset, reinitializes the key and clears state. Provides a way to repeatedly restart the key-dependent computation, which can be abused for repeated probing
+Adversary capabilities: Control over input, observation of output, manipulation of rst and clk if accessible.
+Security rules: Fixed key initialization, no access control on key or result, computation only when bit_idx < 8
+
+PDG GRAPH ANALYSIS
+Reachability: Every sensitive node is reachable from external inputs and reaches external outputs
+Dominance: Key-dependent and index-dependent control nodes dominate the flow of tainted data to the output
+Taint: Untrusted input taint flows directly to the output, modulated by the secret key-creating a clear leakage path.
+
+CWE DRIVEN REVIEW
+Vulnerabilities:
+CWE 1247
+No glitch detection or monitoring
+Signel-cycle security-critical decisions
+FSM with no error/glitch-resilient states
+Reset and clock fully exposed to glitches
+CWE 1234: NONE FOUND
+CWE 1300
+Secret-dependent branching on key bits (IMPORTANT, good find)
+Key-dependent switching activity correlated with secret
+Non-constant=time, key-dependent behavior
+Chosen-input side-channel potential
+CWE 226
+Secret register (key) reused without scrubbing (same key on reset)
+Intermediate sensitive state (result) not cleared before reuse
+Output retains key-derive data with no scrub
+Scrub only on global reset, not on all exit paths
+
+TESTBENCH GENERATION
+not testing for CWE 1234
+Correctly detected the absence of protections
+
+REPAIR
+Had to redo without systemverilog
+New module generated with new testbench, module passed all tests, test bench good!
+Added glitch detetction -> safe state
+Implemented FSM states for error, busy, idle
+Constant-time masked crypto
+Scrubbing before/after reuse
