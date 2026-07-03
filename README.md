@@ -12,35 +12,39 @@ According to Meng et al (2025), the main bugs within Verilog RTL involve assignm
 # 2. Motivation
 We created our methodology to simplify the task of locating and fixing bugs for both individuals and LLMs; Finding them earlier throughout the hardware design process makes it easier to fix, and reduces potential costs in replacing faulty hardware in the future. In addition, LLMs have become increasingly relevant in the field of cybersecurity, and hardware designers have begun using LLMs to simplify tasks such as testbench creation. In some cases, LLMs have shown themselves to contribute to more accurate and effective RTL repairs (Alsaqer et al. 2024). However, the main struggle of LLMs in hardware design is that due to their lack of knowledge in the subject and inherent bias against hardware design, they often struggle with more complex circuits. (Paria and Bhunia, 2026). This issue is contributed due to under-constrained repair: A bug in RTL code allows the LLM to determine multiple different methods on how to fix it, regardless of if they are relevant to the design (Mastora and Sullivan, 2026). Underconstrained repair is primarily caused by three main factors: prompting, data scarcity, and long context processing, all of which can interfere with the learning of the LLM, preventing it from obtaining a true answer (Liu et al, 2026). Therefore, this framework is also meant to ensure that LLMs obtain proper fine-tuning to ensure that they will be able to assess hardware design more accurately, and eventually reduce the requirment of human assistance.
 ## 2.1 Related Works
-<!--Insert Related Works Section Here-->
+The Verilog LLM-Aided Vulnerability Detection framework (VerilogLAVD) by Long et al. (2026) explores the idea of LLMs detecting vulnerabilities by creating a property graph based on its structure and detecting its vulnerabilities based on its time-related edges. The researchers assess the performance of multiple LLMs using this method through their quality, reliability and practicality to determine that this method has greatly improved LLM’s ability to detect vulnerabilities within Verilog code. However, one of the largest weaknesses within their research was the context limit of the LLM when processing data.
+
+According to a survey by Liu et al. (2026), the three main challenges of LLMs in hardware security are prompting due to the requirement of strong expertise in hardware security, the scarcity and cost of obtaining data, and long context processing, as if it surpasses its intended capacity, the LLM will lose information, forgetting its original “thought” process. Researchers such as Liu and Knechtel et al. (2026) suggest that the main solution for these issues is to fine-tune the LLM so that it best understands the semantics of Verilog and other important pieces of knowledge on hardware security. Going further on this point, Liu proposes the idea of multiple agents breaking down the task of debugging RTL code. For example, The MAGE LLM not only has a Verilog checking mechanism to detect early errors but also has four agents for the tasks of RTL generation, testbench generation, simulation, and debugging respectively. Meanwhile, AIVRIL utilizes two different agents, one for RTL generation, and one to review the code for errors.
+
+Our methodology hopes to build on the idea of VerilogLAVD by analyzing hardware CWEs to allow both people and fine-tuned LLMs to better understand and reiteratively improve on their Verilog RTL code to minimize the number of possible exploits within circuits.
 # 3. Methodology
 
-Our methodology was designed through the analysis of CWE entries (MITRE, 2025), previous works, and iterative testing with the goal of providing an effective and efficient method to identify vulnerabilities that individuals with limited knowledge can utilize. We have limited our methodology and research to the listed CWEs on MITRE's 2025 Most Important Hardware Weaknesses list to target commonly seen vulnerabilities. 2 CWE entries on this list were omitted due to these vulnerabilities arising from microarchitectural design considerations.
+Our methodology was designed through the analysis of CWE entries (MITRE, 2025), previous works, and iterative testing with the goal of providing an effective and efficient method to identify vulnerabilities that individuals with limited knowledge can utilize. We have limited our methodology and research to the listed CWEs on MITRE's 2025 Most Important Hardware Weaknesses list to target commonly seen vulnerabilities. Two CWE entries on this list (CWE-1421 and CWE-1423) were omitted due to these vulnerabilities arising from microarchitectural design considerations.
 ### Complete list of CWEs:
-- 226: Sensitive Information in Resource Not Removed Before Reuse
-- 1189: Improper Isolation of Shared Resources on System-on-a-Chip (SoC)
-- 1191: On-Chip Debug and Test Interface With Improper Access Control
-- 1234: Hardware Internal or Debug Modes Allow Override of Locks
-- 1247: Improper Protection Against Voltage and Clock Glitches
-- 1256: Improper Restriction of Software Interfaces to Hardware Features
-- 1260: Improper Handling of Overlap Between Protected Memory Ranges
-- 1262: Improper Access Control for Register Interface
-- 1300: Improper Protection of Physical Side Channels
+- CWE-226: Sensitive Information in Resource Not Removed Before Reuse
+- CWE-1189: Improper Isolation of Shared Resources on System-on-a-Chip (SoC)
+- CWE-1191: On-Chip Debug and Test Interface With Improper Access Control
+- CWE-1234: Hardware Internal or Debug Modes Allow Override of Locks
+- CWE-1247: Improper Protection Against Voltage and Clock Glitches
+- CWE-1256: Improper Restriction of Software Interfaces to Hardware Features
+- CWE-1260: Improper Handling of Overlap Between Protected Memory Ranges
+- CWE-1262: Improper Access Control for Register Interface
+- CWE-1300: Improper Protection of Physical Side Channels
 
-Given an RTL Design, the role and features of the module are first identified. The module is then analyzed to determine important assets, behavior, data, and control flow. A CWE-driven review is then done utilzing the results of the analysis and module to identify potential vulnerabilties. A testbench is then created based off of potential / suspected vulnerabilities. The module is tested using the testbench, and reparied utilizing CWE-Design rules until the module passes simulation.
+Given an RTL Design, the role and features of the module are first identified. The module is then analyzed to determine important assets, behavior, data, and control flow. A CWE-driven review is then done utilzing the results of the analysis and module to identify potential vulnerabilties. A testbench is then created based off of potential and suspected vulnerabilities. The module is tested using the testbench, and reparied utilizing CWE-Design rules until the module passes simulation. We utilized Microsoft Copilot as the LLM to judge performance; Other models may yield different result.
 
 <img width="917" height="476" alt="CWE Detection Methodology Flowchart" src="https://github.com/user-attachments/assets/75bb6aa5-7993-4285-9308-ac51683d81b9" />
 
 ##### Figure 1: High-Level Graph of Methodology
 
 ## 3.1 Type Classification
-The role of the module and any potential features are first identified. The AI model is given the (potentially) buggy module, along with a list of Module Types / Features and their corresponding potential CWEs (Figure 2). The AI model is instructured to identify any of the features on the list present in the given RTL design. It is possible to have multiple features in the design depending on the complexity of the module. 
+The role of the module and any potential features are first identified. The AI model is given the (potentially) buggy module, along with a list of Module Types, Features and their corresponding potential CWEs (Figure 2). The AI model is instructured to identify any of the features on the list present in the given RTL design. It is possible to have multiple features in the design depending on the complexity of the module. 
 
 By identifying these features, we are able to narrow down the amount of CWEs to look for when conducting the CWE-Driven review; It would be unnecessary to check for an improper JTAG authentication in a module that does not have a JTAG interface for example. Reviewing all CWEs also increases the risk of providing an overwhelming amount of information to the AI, potentially degrading its performance. The selected CWEs are recorded as potential vulnerabilities that will be reviewed in the CWE-Driven review.
 
 <img width="1178" height="265" alt="CWE Vulnerability Table" src="https://github.com/user-attachments/assets/7492367d-0e89-4a0e-877b-163cd67bf3a0" />
 
-##### Figure 2: List of Module Types / Features and Corresponding CWEs
+##### Figure 2: List of Module Types, Features and Corresponding CWEs
 
 ## 3.2 Asset Identification
 Next, any important assets are to be identified. The AI model is given the RTL design, the previously found module type, and features, and is instructed to identify any important assets, behavior, and functionality of the module. This includes important assets such as keys, privilege bits, etc., boundaries between privilege domains, clock behavior, reset schemes, potential adversary capabilities, security rules set in place such as restrictions on data, and finite state machines, including their transition rules, illegal states, etc. The AI model returns a list of its findings that will be utilized in the CWE-Driven review.
@@ -59,12 +63,12 @@ The AI model returns the results from the performed analyses, consisting of the 
 ## 3.4 CWE-Driven Manual Review
 Utilizing the module and the results from the analysis, a CWE-driven review is performed. The AI model is given the RTL design, the identified key assets, the results from the PDG analysis, and relevant CWE guides. The AI model is instructed to utilize the given data, and follow all given CWE guides to identify vulnerabilities in the module.
 
-CWE guides are chosen based on suspected / potential CWEs determined from module / asset / behavior identification, and graph analysis results. The CWE guides were developed through analysis of their respective CWE entries, including their common causes, and identification methods, with the goal of including common scenarios where these vulnerabilities may occur. The AI model is only given relevant CWE guides based off of its previous findings as to not overwhelm the AI model with too many instructions that may potentially degrade performance. Each listed CWE contains a brief description of the vulnerability, questions to guide thinking, common causes of the vulnerability, and a checklist to aid in their identification. The AI models returns a list of its found vulnerabilities with its corresponding CWE entry, along with a description of the issue in the module. These results are then used to generate a testbench to verify these vulnerabilities.
+CWE guides are chosen based on suspected or potential CWEs determined from module, asset and behavior identification, and graph analysis results. The CWE guides were developed through analysis of their respective CWE entries, including their common causes, and identification methods, with the goal of including common scenarios where these vulnerabilities may occur. The AI model is only given relevant CWE guides based off of its previous findings as to not overwhelm the AI model with too many instructions that may potentially degrade performance. Each listed CWE contains a brief description of the vulnerability, questions to guide thinking, common causes of the vulnerability, and a checklist to aid in their identification. The AI models returns a list of its found vulnerabilities with its corresponding CWE entry, along with a description of the issue in the module. These results are then used to generate a testbench to verify these vulnerabilities.
 
 The complete list of CWE guides can be found in the prompting directory of this repository.
 
 ## 3.5 Testbench Generation
-Utilizing the previously found vulnerabilities, a testbench for the RTL design is created. The AI model is given the RTL design, the found vulnerabilities (if any), and a list of CWE secure design rules, and is instructed to generate a testbench that targets all found vulnerabilities and the validity of the given secure design rules for each CWE. Similar to the CWE guides, a list of CWE design rules were created for each CWE. These design rules were developed through analysis of their corresponding CWE entries, including their mitigation methods, and common mistakes that lead to these vulnerabilities. All testbench tests should be reviewed for potential errors, as a false pass / fail may negatively impact performance and code repair.
+Utilizing the previously found vulnerabilities, a testbench for the RTL design is created. The AI model is given the RTL design, the found vulnerabilities (if any), and a list of CWE secure design rules, and is instructed to generate a testbench that targets all found vulnerabilities and the validity of the given secure design rules for each CWE. Similar to the CWE guides, a list of CWE design rules were created for each CWE. These design rules were developed through analysis of their corresponding CWE entries, including their mitigation methods, and common mistakes that lead to these vulnerabilities. All testbench tests should be reviewed for potential errors, as a false pass or fail may negatively impact performance and code repair.
 
 The complete list of CWE design rules can be found in the prompting directory of this repository.
 
@@ -72,7 +76,7 @@ The complete list of CWE design rules can be found in the prompting directory of
 The generated testbench is then compiled and ran to test the given RTL design under the generated tests. If all tests pass, the given RTL module passes inspection, and all testing and analysis is completed. If one of more tests fail, the RTL design will then undergo a code repair (3.7).
 
 ## 3.7 Code Repair
-Utilizing the results from the simulation, the RTL design will undergo code repair. The AI model is given the RTL design, all failed testbench tests, and the list of CWE design rules. The AI model is instructed to fix the module based off of the failed tests from the testbench simulation, while utilzing the CWE design rules as a guide for code repair. The AI model is also instructed to generate an updated testbench if changes to the RTL design were made that make it imcompatible to the previously generated testbench (e.g. a new input). Once the fixed module (and potentially updated testbench) is generated, the simulation step is repeated (3.6) testing the repaired RTL design.
+Utilizing the results from the simulation, the RTL design will undergo code repair. The AI model is given the RTL design, all failed testbench tests, and the list of CWE design rules. The AI model is instructed to fix the module based off of the failed tests from the testbench simulation, while utilzing the CWE design rules as a guide for code repair. The AI model is also instructed to generate an updated testbench if changes to the RTL design were made that make it incompatible to the previously generated testbench (e.g. a new input). Once the fixed module (and potentially updated testbench) is generated, the simulation step is repeated (3.6) testing the repaired RTL design.
 
 # 4. Results
 
