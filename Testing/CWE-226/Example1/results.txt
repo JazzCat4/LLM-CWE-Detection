@@ -1,0 +1,37 @@
+1. Type Classification
+Module Type: Register file / Control & Status Register (CSR)  
+Relevant CWEs: CWE‑226, CWE‑1262, CWE‑1256
+
+2. Asset Identification
+    2.1 Assets
+        secret_in, buffer, public_in, data_out
+    2.2 Privilege Domains
+        load_secret and secret_in are declared secure
+        reuse_buffer and public_in are declared non-secure.
+        reuse_buffer is used between public and secret data, causing a privilege boundary violation.
+        data_out is a single channel used for both secret and public data.
+    2.3 Clock Behavior and Reset Scheme
+        Recognizes global clear, no partial clears
+        No potential issues seen in clock
+    Also recognizes Adversary Capabilities and Missing Security Rules
+3. Dependency Graph Analysis
+    - Buffer is a taint hub for both public and secret data, with direct access to data_out
+    - No node dominates data_out with a safe value, so data_out can carry tainted information whenever control signals allow.
+    - Reachability from secret to output is unconditional once load_secret is asserted (no masking, filtering or privilege checks.)
+4. CWE-Driven Review
+    CWE-226: 
+        buffer is a shared storage resource that holds secret_in when load_secret is asserted, and is later reused for public_in when reuse_buffer is asserted. 
+        There is no guaranteed scrub/zero-write between these two contexts — only a global reset clears it. 
+        In the cycle where reuse_buffer is used after a secret load, data_out still reads the old buffer value (tainted with secret data) due to non-blocking assignments, so secret information can leak when the buffer is “reused” for public data.
+    CWE-1256:
+        The module exposes a simple interface where load_secret, reuse_buffer, secret_in, public_in, and data_out can be driven/observed without any notion of privilege level. Any software or bus master that can control these signals effectively controls a secret-handling hardware feature (loading and outputting secret data) with no restriction. 
+        No separation between “privileged” and “unprivileged” access to the buffer or its output, so untrusted software can invoke secret load and reuse behavior.
+    CWE-1262:
+        buffer and data_out act like registers/CSRs containing sensitive data, but there is no access control logic—no privilege checks, lock bits, or default-deny policy. 
+        Reads of data_out always return whatever is in buffer (including secrets), and writes to the effective “register interface” (secret_in/public_in under load_secret/reuse_buffer) are accepted from any requester. 
+        Both read and write paths are effectively default-open, allowing untrusted domains to observe or manipulate secret-bearing storage.
+5. Testbench Generation
+
+6. Simulation
+
+7. Code Repair
