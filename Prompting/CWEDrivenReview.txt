@@ -1,3 +1,7 @@
+Using the given Verilog module and the results from analysis and identification, utilize the CWE Review Guides below to identify any vulnerabilities in the module. Your output should be a list of all found vulnerabilities.
+
+
+
 CWE-226 - Sensitive Information in Resource Not Removed Before Reuse
 Situations where a resource holding sensitive data is reassigned or reused without being cleared, potentially leaking secrets
 
