@@ -47,7 +47,13 @@ By identifying these features, we are able to narrow down the amount of CWEs to 
 ##### Figure 2: List of Module Types, Features and Corresponding CWEs
 
 ## 3.2 Asset Identification
-Next, any important assets are to be identified. The AI model is given the RTL design, the previously found module type, and features, and is instructed to identify any important assets, behavior, and functionality of the module. This includes important assets such as keys, privilege bits, etc., boundaries between privilege domains, clock behavior, reset schemes, potential adversary capabilities, security rules set in place such as restrictions on data, and finite state machines, including their transition rules, illegal states, etc. The AI model returns a list of its findings that will be utilized in the CWE-Driven review.
+Next, any important assets are to be identified. The AI model is given the RTL design, the previously found module type, and features, and is instructed to identify any important assets, behavior, and functionality of the module. This includes the following: 
+- Any important assets, such as keys, privilege bits, lifecycle states, etc.
+- Boundaries between privilege domains (secure/non-secure, privileged/unprivileged, on-chip/off-chip). Each crossing is a potential vulnerability!
+- Clock behavior and reset schemes
+- Any adversary capabilities, such as potentially toggling JTAG pins, or manipulating the clock.
+- Security rules set in place, such as restrictions on certain data.
+- FSM states, transition-rules, illegal states
 
 Generally, identifying the important assets of a module will help guide the AI model into the kinds of problems the module may have, along with verifying its understanding of the module itself. This also aids in the CWE-Driven review, as the AI has a better understanding of where to look for potential vulnerabilities in the RTL design, improving its efficiency and effectiveness.
 
