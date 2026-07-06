@@ -4,9 +4,7 @@
 // RTL, these assertions will FAIL, demonstrating the issues.
 
 `timescale 1ns/1ps
-`include "Ex1.v"
 module Ex1_tb;
-
   // DUT interface
   reg         clk;
   reg         reset;
