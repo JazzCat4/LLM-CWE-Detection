@@ -1,0 +1,85 @@
+1. Type Classification
+Register file / CSR	| 226, 1262, 1256 | Stores sensitive key, no access control, always readable
+2. Asset Identification
+Assets:
+    - 128-bit key value
+    - Key load control signal
+    - Privilege/Domain Boundary: Key input vs key register
+    - Privilege/Domain Boundary: Key Register vs Consumers of key_reg
+        - secure -> non-secure
+        - on-chip -> off-chip
+        - privileged -> unprivileged
+    - Clock Behavior: Single clock domain, key updates only occur on rising edge of clk, no clock gating, no multiple clock domains, no explicit clock-domain crossing logic.
+    - Reset Scheme: Asynchronous active-low reset. On reset, key_reg is cleared. No other reset behavior.
+Adversary Capabilities:
+    - The attacker can observe and even inject malicious keys from key_in
+    - Any logic/interface connected to key_reg can read it directly.
+    - Updates occur on posedge clk, so attackers than can manipulate clk can interfere with logic or key loads. Module has no protection against glitches.
+    - Attackers who manipulate rst_n can exploit race conditions or force denial of service. There is also no protection for resets.
+Security Rules:
+    - On any active-low reset, key_reg must be reset to 128'h0.
+    - Key is only updated when load_key is asserted; otherwise retains its previous value.
+Missing security rules:
+    - No rule preventing reading of the key
+    - No rule restricting who may assert key
+    - No rule for lifecycle states
+    - No rule for privilege levels
+FSM states:
+    - No explicit FSM; purely combinational
+    - Two conditions: reset state and loaded state
+FSM transition rules:
+    - On !rst_n, transition to zeroized state
+    - On rst_n && load_key, transition to new key state.
+    - On rst_n && !load_key, remain in current state.
+Undesired conditions:
+    - Loading keys in insecure lifecycle
+    - Re-loading keys adter they should be locked isn't prevented/
+    - Exposing the key to nonsecure domains is not restrcited.
+3. Dependency Analysis Graph
+
+- The dependency graph is small but reveals full reachability from all inputs to the key register.
+- Reset and clock dominate all updates, but no signal dominates read access, making the key always exposed.
+- Taint from untrusted domains propagates directly into the key register and then outward with no barriers.
+- The design lacks privilege boundaries, lifecycle controls, or FSM‑based restrictions.
+- Any entity capable of toggling load_key, key_in, or rst_n can fully control or erase the key.
+- The module behaves like a transparent key latch, not a secure key storage element.
+
+4. CWE-Driven Review
+CWE-226:
+    - Key register reused without scrub before overwrite
+    - Scrub only on reset path
+    - Resource remains accessible while holding stale secrets.
+CWE-1256:
+    - Key load control not privilege-gated
+    - Secret-holding register behaves like normal CSR
+CWE-1262:
+    - No read access control on sensitive key register
+    - No write access control on key update path
+    - Default-open access policy
+    - Absence of lock / lifecycle bits
+5. Testbench Generation
+    Testbench properly generated and compiles properly
+6. Simulation
+    Run 1
+    === SECURITY TESTBENCH START ===
+        [CWE-226] First key loaded: aaaabbbbccccddddeeeeffff11112222
+        [CWE-226] Second key loaded (old key overwritten without zeroization): 123456789abcdef013579bdf2468aced
+        [CWE-1262] Key is fully readable by ANY logic: 123456789abcdef013579bdf2468aced
+        [CWE-1256] Simulating unprivileged write to load_key...
+        [CWE-1256] Unprivileged overwrite succeeded: bad0bad0bad0bad0bad0bad0bad0bad0
+        [CWE-226] Asserting reset to check scrubbing...
+        [CWE-226] Key after reset (should be zero): 00000000000000000000000000000000
+    === SECURITY TESTBENCH END ===
+    Run 2
+    === SECURE KEY REG TESTBENCH START ===
+        [CWE-226] First key loaded, key_valid=1
+        [CWE-226] Key scrubbed, key_valid=0
+        [CWE-226] Second key loaded after scrub, key_valid=1
+        [CWE-1256] Unprivileged overwrite blocked, key_valid=1
+        [CWE-1262] Key locked, key_locked=1
+        [CWE-1262] Write after lock blocked, key_locked=1, key_valid=1
+        [CWE-226] After reset, key_valid=0, key_locked=0
+    === SECURE KEY REG TESTBENCH END ===
+7. Code Repair
+    Run 1 (No LLM Generation) - Failed a good amount of tests -> Revise, then Step 6
+    Run 2 (First LLM Repair) -> All tests passed -> Pass
