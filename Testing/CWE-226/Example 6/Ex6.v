@@ -3,13 +3,13 @@ module secret_fifo (
     input wire rst,
     input wire push,
     input wire pop,
-    input wire [63:0] secret_in,
-    output reg [63:0] secret_out,
+    input wire [63:0] key_in,
+    output reg [63:0] key_out,
     output reg empty,
     output reg full
 );
 
-    reg [63:0] secret [0:3];
+    reg [63:0] key [0:3];
     reg [1:0] head, tail;
     reg [2:0] count;
 
@@ -18,15 +18,15 @@ module secret_fifo (
             head <= 0;
             tail <= 0;
             count <= 0;
-            secret_out <= 0;
+            key_out <= 0;
         end else begin
             if (push && !full) begin
-                secret[tail] <= secret_in;
+                key[tail] <= key_in;
                 tail <= tail + 1;
                 count <= count + 1;
             end
             if (pop && !empty) begin
-                secret_out <= secret[head];
+                key_out <= key[head];
                 head <= head + 1;
                 count <= count - 1;
             end
