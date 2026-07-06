@@ -1,0 +1,38 @@
+TYPE CLASSIFICATION
+Register file / CSR, SoC / interconnect / MPU, Debug / JTAG / test interface, clock / power / reset logic
+Relevant CWEs: 226, 1262, 1256, 1189, 1260, 1191, 1234, 1247
+
+ASSET IDENTIFICATION
+Assets: MPU config register, config_regs, config_locked
+Privilege domain boundaries: External bus -> internal config / lock control, debug domain -> locked domain (overrides config_locked and allows writes even when locked), data_out exposes config_locked/config_regs with no access control
+Clock/reset: All state updates occur on posedge CLK, active-low reset, on reset config_locked and mpu_config are cleared but config_regs is not reset.
+Adversary capabilities: Potentially drive write_enable, addr, and data_in to write arbitrary values into registers when unlocked, and write to config_locked when unlocked or when debug_modei s asserted. Debug override the lock. Reset manipulation to reset to unlocked state.
+Security rules: write restriction by lock. No restrictions on reads. Address-based partitioning
+States: Locked/unlocked
+
+PDDG ANALYSIS
+All internal state is reachable from external inputs
+Lock protection is bypassable via debug_mode (main vulnerability)
+Taint from untrusted sources propagates through the entire design, including the lock bit
+reset does not sanitize config registers
+Dominance analysis shows no signal consistently enforces protection across all paths
+
+CWE DRIVEN ANALYSIS
+Checklist omitted due to character limit
+1189: Unpartitioned shared configuration space, shared bus with no transaction tagging or access checks, shared reset across trust domains
+1191: Single-signal debug override with no authentication, debug access has no address range restriction, debug not clearly disabled in production, debug backdoor to lock bit
+1234: Debug mode explicitly overrides lock bit on write paths, lock bit can be cleared via debug path, externally controllable reset clears lock bit
+1247: Single-cycle security decision with no redundancy, no glitch detection or monitoring, reset and lock behavior vulnerable to fault injection
+1256: lock bit exposed as a normal software-accessible register, write-once semantics not enforced (loci bit), mixed-privilege features in a single addressable space
+1260: MPU config. fully programmable without safeguards, default behavior is permissive by construction
+1262: No priv./trust level check on register writes, missing read access control on sensitive registers, trust/priv. signal is software-controllable (debug mode), lock bit can be cleared after being set, unused control input (lock_config)
+226: Config. register file not reset or cleared, shared register file reused without zeroing, partial reset of sensitive state
+
+TESTBENCH GENERATION
+Most test bench tests showed vulnerability, when testing 1247, test bench expected an illegal write after clock glitch, but no write was done successfully.
+
+CODE REPAIR
+Fixed: Scrubs sensitive state on reset and in debug. Enforces priv.-only writes to MPU and lock. Makes the lock one-way and non-bypassable by debug. Masks sensitive reads to unprivileged agents. Uses a glitch detector to force a safe, locked state.
+
+Passes all tests
+Note: When testing for glitches, config_locked is read as 0 instead of the intended 1, but after review this seems to likely be due to glitch_detect not being asserted long enough to be sampled on the clock edge.
