@@ -1,0 +1,38 @@
+TYPE CLASSIFICATION
+Applicable module types: Register file / CSR, clock / reset logic
+Potential crypto-related register
+Potential CWEs: 226, 1256, 1262, 1247, 1234, 1300
+
+ASSET IDENTIFICATION
+Assets: Key register, control register, priv. mode (along with it being unused), address, write/read data
+Priv. domain boundaries: SoC -> register file boundary, Priv. vs unpriv.
+Clock behavior and reset: Clear cntrl_reg and key_reg
+Adversary capabilities: Priv. manipulation, clock manipulation, reset manipulation, SoC-level attacks
+Security rules: Address based access control, no priv. checks, no lifecycle or lock states, reset rule
+
+PDG ANALYSIS
+Reachability: All external inputs can reach both registers and the output. Sensitive data (key_reg) is fully exposed.
+Dominance: No privilege or security mechanism dominates access to sensitive assets.
+Taint: Key material is writable and readable by untrusted domains
+
+CWE DRIVEN REVIEW
+NOTE: Removed checklist due to character limit
+226: Key register reused without secure lifecycle clearing, assumption of reset as sole clearing mechanism 
+1247: Single-cycle non-redundant security decisions, no glitch detection or error signaling
+1256: Sensitive registers fully software-accessible without priv. gating, control register potentially affecting priv. behavior
+1262: No priv/trust check on writes to sensitive registers, missing read access control on sensitive registers, unused priv. input, default-open access policy
+CWEs not present: 1234, 1300
+
+TESTBENCH GENERATION
+IMPORTANT NOTE: Generated with a typo with wr_en signal for seemingly no reason? No writing was being done, but AI mentioned that vulnerability still there because the reads to important registers were still being done, but this could've been shown with wr_en perfectly fine.
+Otherwise, once fixed, all tests show vulnerabilities in module
+
+REPAIR
+Fixes:
+1262/1256: All reads/writes to sensitive registers are gated by priv_ok, default-deny
+226: Reset and glitch force both registers to 0, key_cleared enforces scrub-before-reuse: key writes only allowed after an explicit scrub via cntrl_reg[0]
+1247: glitch_detect input forces an error_state, clears sensitive registers, and blocks further access, defensive default: in error_state, the design fails closed (no data, no writes)
+
+NOTE, AI CHANGED FUNCTIONALITY OF CNTRL_REG ON ITS OWN BY UTILIZING THE FIRST BIT AS A CLEARING-SIGNAL, COULD BE AN ISSUE
+
+Testbench is good, and shows all fixed vulnerabilities otherwise

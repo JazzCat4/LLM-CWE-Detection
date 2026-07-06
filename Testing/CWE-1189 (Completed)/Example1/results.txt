@@ -1,0 +1,41 @@
+TYPE CLASSIFICATION
+Memory Controller / DMA, SoC bus/ interconnect / MPU, Clock / reset logic
+Relevant CWEs: 226, 1189, 1260, 1262, 1247, 1234
+
+ASSET IDENTIFICATION
+Assets: shared memory contents, CPU and Peripheral data paths, turn bit
+Priv. domain: Secure CPU vs untrusted peripheral, read vs write privileges
+Clock and reset: Turn updated on posedge clk, memory is not reset or scrubbed
+Adversary capabilities: Peripheral as adversary, potential manipulation of clock/reset
+Security rules: Weak access rule utilizing turn. No Address-range restrictions, priv. bits, lifecycle checks, write protection, read protection, or scrubbing on reset.
+States: Turn 0 = CPU, Turn 1 = Peripheral, transition between each every cycle
+
+PDG ANALYSIS
+Reachability: Any data written by the secure CPU is reachable by the untrusted peripheral through the shared memory
+Dominance: The arbitration bit turn is a dominant control point for all accesses, but it does not enforce any security separation-only temporal scheduling.
+Taint: Taint from the untrusted peripheral directly contaminates the shared memory and can be observed by the secure CPU. Sensitive data from the secure CPU flows back to the untrusted peripheral via the same memory. There is no taint containment.
+
+CWE DRIVEN REVIEW
+Note: Checklists omitted due to character limit
+226: Uncleared shared memory, never scrubbed. Context reuse without zeroing
+1189: Shared memory with no partitioning, CPU and peripheral both access the same memory. No master ID or security attribute. Single shared resource across trust domains
+1262: Default-open access policy: Any address in mem is readable and writable by both CPU and peripheral. No priv./trust checks on writes. No read protection. No hardware-derived privilege signals
+1247: Signal-cycle security decision. No glitch detection or error handling. Asynchronous reset only partially protects state.
+1234: NO VULNERABILITY FOUND
+1260: NO VULNERABILITY FOUND
+
+TESTBENCH GENERATION
+Generated successfully, showing all vulnerabilities
+
+CODE REPAIR
+Fixed: 226: All memories are scrubbed on reset
+1189: Secure CPU and untrusted peripheral no longer share the same memory
+1262: Access control is explicit and default-deny for peripheral on secure addresses. CPU-only region cannot be written/read by peripheral. 
+1247: Arbitration uses a multi-bit FSM with an error state and a glitch_detected input that forces a safe state
+
+One test failed in new testbench, peripheral writing did not work
+
+CODE REPAIR 2:
+Fixes: Reduced privilege checks to peripheral's own memory (originally was too strict that the peripheral could not access its own memory space)
+
+All tests pass!

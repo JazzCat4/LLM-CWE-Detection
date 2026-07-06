@@ -1,0 +1,33 @@
+TYPE CLASSIFICATION
+Module types: Clock / power/  reset logic, Debug / JTAG/ test interface
+Relevant CWEs: 1247, 1234, 1191, 1256
+Partial match: CSR register (Due to having a writable internal register, and a lock bit controlling write access
+-> Potential CWEs: 226, 1262
+
+ASSET IDENTIFICATION
+Assets: Data_out, lock_status, scan_mode, debug_unlocked, and write signals all are important to the functionality of the module
+Privilege domains: Lock vs unlocked domains, reset vs operational domain, normal function vs debug/test domain.
+Clock and reset: Both always blocks are posedge CLK. Active-low reset for both registers, clears lock_status and data_out.
+Adversary capabilities: Manipulate debug/test signals, write/data inputs, lock input, reset, and clock
+Security rules: lock-based write restriction (also noted the intended rule), reset rule
+States: Lock status, transition from lock to unlock, and data_out behavior
+
+PDG ANALYSIS
+Reachability: Untrusted signals (scan_mode, debug_unlocked, data_in) can reach and modify data_out even when the lock bit is set (TARGET Vulnerability)
+Dominance: Debug/test signals dominate the write path, overriding the lock bit. Reset dominate initial states
+Taint: Taint flows from untrusted inputs into both control and data paths, allowing unauthorized writes to data_out and clearing of lock_status via reset
+
+CWE DRIVEN REVIEW
+1234: Whenever scan_mode or debug_unlocked is 1, lock_status becomes irrelevant and data_out is writable even in the locked state
+1191: Single-factor debug enable with no authentication, no restriction on what debug can write, potential exposure of sensitive register to scane/debug
+1262: no priv/trust check on writes, trust/priv. signals are externally controllable, lock bit not enforced on all write paths
+1256: Unprivileged control over a hardware-protected register, dangerous feature bits mixed with unprotected control
+226: No guaranteed scrub on context change, reset is the only clear (not tied to ownership change), register reused across security contexts without wipe
+1247: Single-cycle security decision with no redundancy, no glitch detection or error state
+
+TESTBENCH GENERATION
+Testbench generator with one error, where in instantiation of DUT had two lock inputs. When removed, testbench worked fine. 
+
+CODE REPAIR
+Fixes: Debug/test signal no longer bypasses the lock bit, data_out is scrubbed on reset and when the lock is asserted, a glitch_detect input forces a locked, zeroed safe state
+Repairs successful!

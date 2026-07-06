@@ -1,4 +1,4 @@
-Task: You are a computer engineer tasked with reviewing a verilog module to identify potential vulnerabilities. First, review the module, and identify any applicable module types / features the design has from the table below:
+Task: You are a computer engineer tasked with reviewing a Verilog module to identify potential vulnerabilities. First, review the module, and identify any applicable module types / features the design has from the table below:
 
 Module Type / Feature: Potential CWEs
 -------------------------------------
