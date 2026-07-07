@@ -1,0 +1,36 @@
+TYPE CLASSIFICATION
+Module types: Register file / CSR, Clock / power / reset logic
+Relevant CWEs: 226, 1256, 1262, 1247, 1234
+
+ASSET IDENTIFICATION
+Assets: Locked bit, data register, debug override
+Priv. domain boundaries: Unprivileged vs privileged write boundary, config vs operation boundary
+Clock and reset: Always blocks triggered on posedge CLK. Reset is active-low reset, lock and output is cleared on reset.
+Adversary capabilities: Control of inputs, debug/privileged domain abuse
+Security rules: Lock rule, write access rule
+States / transitions: Locked vs unlocked, transition from unlocked to lock (one way). 
+
+PDG ANALYSIS
+Reachability: All inputs can reach internal state, debug_enable provides a direct privileged path to data_out
+Dominance: resetn dominates all state transitions, locked dominates write access except when debug_enable is asserted, debug_enable dominates the lock, enabling full override
+Taint: Tainted data_in can reach data_out whenever write conditions are met, debug_enable is the most dangerous as it bypasses all protection, resetn can clear protection and allow immediate unauthorized writes
+
+CWE DRIVEN REVIEW
+1262: Software-controllable trust/priv. signals. Lock bit not enforced on all write paths. Unprotected read path.
+1234: Debug mode directly overrides lock bit (intended vulnerability). Shadow/alternate write path via debug. No authenticated unlock or fuse concept. 
+1247: Single-cycle security decision with no redundancy. Asynchronous reset on security-critical registers. No glitch detection or error state
+1256: Software-accessible control of a privileged hardware feature. Mixed-privileged behavior in a single register interface. No lock after boot configuration.
+226: No explicit scrub on all context changes. Reuse of the same register across privilege domains.
+
+TESTBENCH SIMULATION
+Testbench generated successfully showing vulnerabilities, no issues
+
+CODE REPAIR
+Fixes: debug_enable is no longer in the write condition, it cannot override locked
+All writes and lock operations  require privileged signal, default is deny
+glitch_detect forces a safe state
+Reset and glitch paths explicitly scrub data_out
+
+Note: debug_enable signal is still an input in the fixed module, however goes unused. Otherwise, module is fixed!
+
+Updated testbench is successful as well.

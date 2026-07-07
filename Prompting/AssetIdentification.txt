@@ -1,4 +1,4 @@
-Now, based off of the given model and the identified features, identify the following:
+Now, based off of the given module and the identified features, identify the following:
 - Identify any important assets, such as keys, privilege bits, lifecycle states, etc.
 - Identify boundaries between privilege domains (secure/non-secure, privileged/unprivileged, on-chip/off-chip). Each crossing is a potential vulnerability!
 - Identify clock behavior and reset schemes
