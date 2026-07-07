@@ -1,0 +1,35 @@
+TYPE CLASSIFICATION
+Module type: Crypto Accelerator, clock / power / reset logic
+Also potentially Register file / CSR due to secret keys and internal states
+Potential CWEs: 226, 1300, 1247, 1234, 1262
+
+ASSET IDENTIFICATION
+Assets: Secret_key, authentication result / unlock flag, FSM state (idle, checking, unlocked), challenge and response values, authentication trigger signal
+Privilege boundaries: External inputs vs internal secure logic. Unlocked output to rest of system
+Clock and reset: Sequential logic driven by posedge CLK. On reset, state and lock bit reset.
+Adversary capabilities: Control of inputs, reset manipulation, observation of unlocked output.
+Security rules: Authentication rule, attempt control rule, reset rules
+FSM states: Idle, checking, unlocked. 2'b11 is not defined -> illegal state. Transition rules from Idle -> checking -> unlocked
+
+PDG ANALYSIS
+Reachability: Confirms that UNLOCKED is reachable solely through CHECKING, but CHECKING is fully controlled by untrusted inputs
+Dominance: CHECKING dominates UNLOCKED, and reset dominates all states
+Taint: Reveals that untrusted inputs directly control the authentication decision and can propagate to the privileged output without mitigation
+
+CWE DRIVEN REVIEW
+226: Hard-coded secret key not scrubbed. No scrubbing on exit from CHECKING state
+1300: Key-dependent combinational logic. Single unprotected key comparison
+1247: Single-cycle security decision with no redundancy (intended vulnerability). No glitch detection or error state. Illegal FSM state unhandled.
+1262: Default-open access to authentication interface. Unlock bit effectively controlled by untrusted domain. No rate limiting or lockout
+1234: NONE! (No debug/jtag/test signals or alternate write paths)
+
+TESTBENCH GENERATION
+Note: Testbench generated failed to reset DUT after each test, so leftover states contaminated results. AI was able to fix this after pointing out. Otherwise, tests were good.
+
+CODE REPAIR
+Fixes: Added key_reg instead of using SECRET_KEY directly. Key is loaded only during CHECKING and scrubbed afterward, and on reset and glitch detection.
+Added masking datapath. Removed direct XOR with the constant key during comparison. Constant time comparison.
+Added glitch_detect input, forces into safe ERROR state, clearing unlocked and scrubbing key_reg; Also the default case.
+added auth_priv privilege signal, authentication only allowed when true.
+
+New module and updated test bench are good!
