@@ -1,0 +1,36 @@
+TYPE CLASSIFICATION
+Module types: Register file / CSR, debug / test interface
+Relevant CWEs: 226, 1262, 1256, 1191, 1234
+
+ASSET IDENTIFICATION
+Assets: Lock register, privilege/override signals (lock and debug), data source
+Priv. boundaries: External inputs vs internal. Privileged vs debug domain. Secure vs non-secure crossing (lock || debug check)
+Clock and reset: Writes occur on rising edge of CLK, no reset scheme.
+Adversary capabilities: Control of inputs (lock / debug), debug abuse, clock manipulation, lack of reset protection
+Security rules: Lock_bits is only updated when write_en = 1 and (lock=1 or debug=1). No data validation. No separation of rules (debug and lock)
+
+PDG ANALYSIS
+The dependency graph shows a single control gate controlling writes to a sensitive register
+Reachability: Debug can always reach and modify lock_bits, even when lock is low
+Dominance: Condition dominates all writes, but debug effectively dominates lock by bypassing it
+Taint: Both control and data tain flow directly into lock_bits, meaning the register is fully exposed to untrusted domains
+
+CWE DRIVEN REVIEW
+226: Uncleared sensitive register (no reset or scrub logic)
+1262: Lock bit not write-once / not enforced strongly, sensitive register write path unprotected
+1256: Software-accessible control of loc register. Mixed-privilege semantics in one register 
+1191: Debug access controlled by a single signal. Debug backdoor to sensitive register. No production disable mechanism.
+1234: Debug mode explicitly overrides lock bit (intended vulnerability). Alternate write path via debug. No safeguard against debug misuse.
+
+TESTBENCH GENERATION
+Testbench generated successfully showing all vulnerabilities. NOTE: Needed to add slight pause after each @posedge (CLK) to get correct output (race condition maybe?), AI was able to fix this.
+
+CODE REPAIR
+Fixed: Lock_bits is always cleared on reset and when entering unauthenticated debug
+Lock is write-once and cannot be cleared by debug or software
+Writes to lock_bits require the following: lock = 1, priv_ok = 1, write_en = 1
+Debug never appears as an OR condition on the write path; It cant bypass the lock.
+
+Note: In this new module, any writes have to occur 1 cycle after the lock is set. The AI used the original module to design the rule that the lock needs to be set (true) for writes to be allowed (questionable behavior, but okay for now as the AI was never given security rules, and only had the module to go off of). However, it did not account for this in the testbench, and was trying to set the lock and write in the same cycle, so some writes were unsuccessful when they should have worked. The AI was easily able to find this issue.
+
+Otherwise, new module is good.
