@@ -1,0 +1,37 @@
+TYPE CLASSIFICATION
+Module types: Register file / CSR, Clock / power / reset logic
+Relevant CWEs: 226, 1256, 1262, 1247, 1234
+
+ASSET IDENTIFICATION
+Assets: Data register, lock bit, reset state
+Privilege boundaries: scan/test vs normal operation
+Clock and reset: All sequential logic by posedge CLK. Reset clears lock and data register
+Adversary capabilities: Toggling wr_req to attempt writes, manipulate input data, could utilize scan_mode to bypass lock.
+Security rules: Write restriction rules, lock rules
+State / transitions: Unlocked vs locked, unlocked -> locked via input, locked -> unlocked via reset
+
+PDG ANALYSIS
+Reachability: All external inputs can reach the main asset (dout) either directly (din, wr_req) or indirectly (lock_flag, scan_mode)
+Dominance: The lock bit does not dominate the write path due to scan_mode
+Taint: Untrusted inputs can fully taint dout, including through a lock-bypass path.
+
+CWE DRIVEN REVIEW
+226: Unscrubbed data register on lock. Context reuse without wipe
+1262: Lock bit bypassed by debug/test signal. Trust/privilege signals are potentially software-controlled
+1256: Unprivileged access to lock and data registers. Debug override reachable by unprivileged software.
+1247: Single-cycle security decision. No glitch detection or monitoring.
+1234: Debug/scan mode directly overrides lock bit (intended vulnerability). Reset clears lock bit via external control. Alternate write path via debug signal
+
+TESTBENCH GENERATION
+Generated full tests, most tests okay, however one test has an issue: Module was not reset properly after previous test, so this test did not show properly. Otherwise, vulnerabilities are shown properly.
+
+CODE REPAIR
+Fixes: Added explicit scubbing of dout on reset, lock transition, entering debug/scan mode, and glitch detection
+Added hardware privilege signal that must be asserted for any write.
+Removed scan_mode from write_enable path
+Lock bit is enforced on all write paths
+Lock bit made one-way programmable
+Added glitch_detect input. On glitch: force module into error state, scrub dout, permanently lock the module, block all future writes
+Removed debug override
+
+New module works as intended. New testbench was generated as well, no issues.
