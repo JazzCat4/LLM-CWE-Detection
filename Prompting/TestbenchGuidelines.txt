@@ -1,3 +1,5 @@
+Now, generate a testbench to validate the found vulnerabilities. Utilize the CWE design guides below to also test validity of the module.
+
 CWE-226 - Sensitive Information in Resource Not Removed Before Reuse
 1.	After a resource (memory, register, buffer) is released and reallocated, verify the new owner cannot read prior contents by writing a known pattern. 
 2.	Confirm data is zeroed or overwritten before new access.
@@ -43,3 +45,5 @@ CWE-1300 - Improper Protection of Physical Side Channels
 1.	Measure whether operations on secret data produce distinguishable timing or power signatures. 
 2.	Test that encryption/decryption of different keys takes a constant number of cycles.
 3.	Testbenches should ensure that the circuit does perform any actions that allow users to guess what it is doing (calculations, character by character comparisons, etc.)
+
+Now, based off of the found vulnerabilities and the CWE design guides given previously, fix the module. If necessary, generate a new testbench file to test the new module under the same tests in the previous testbench.
