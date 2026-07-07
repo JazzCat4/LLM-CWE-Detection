@@ -1,7 +1,108 @@
 1. Type Classification
+    CWE-226, CWE-1256, CWE-1262, CWE-1300
 2. Asset Identification
+    Assets:
+        - Key buffer contents (key_buf)
+        - Read data register (rdata_reg)
+    Privilege Domain Boundaries:
+        - On-chip storage vs external interface
+        - Missing explicit privilege separation
+    Clock Behavior/Reset Schemes:
+        - Single clock domain, all is logic is synchronous to posedge clk.
+        - No clock gating, clock-domain crossing, or timing randomization, deterministically on each rising edge.
+        - Active-low, synchronous reset
+        - Reset clears key_buff, but doesn't explicitly clear rdata_reg.
+    Adversary Capabilities:
+        - Control of interface signals (By driving en, we, addr, or wdata, they are abitrarily write/read to the key buffer.)
+        - Reset manipulation
+        - Clock manipulation
+        - No explicit JTAG/debug pins
+    Present Security Rules:
+        - Zeroization on reset
+    Absent Security Rules:
+        - No access control or privilege checks on reads/writes.
+        - No restrictions on which addresses can be read or written to.
+        - No masking, scrambling or exncryption of stored data.
+        - No write-once or lock bits to prevent overwriting keys.
+        - No policy to prevent reading keys back out once written.
+    FSM:
+        - No explicit FSM
+        - Implicit Modes
+            - Reset Mode
+            - Write Mode
+            - Read Mode
+            - Idle Mode
+        - Can write/read with out-of-range addresses.
+        - No explicit handling of simultaneous conflicting conditions.
 3. Dependency Graph Analysis
+    Reachability:
+        - Any data written into key_buf is reachable back to the external rdata port under simple control conditions.
+    Dominance:
+        No node dominates access to key_buf based on privilege: once signals are driven, keys can be read/written without additional gating.
+    Taint-Propagation:
+        - Any malicious data written can be used to later be observed externally, or used as keys internally.
+    Summary:
+        Untrusted control and data inputs can directly taint key storage and cause sensitive key material to flow back to the external output without any sanitization or access control.
 4. CWE-Driven Review
+    CWE-226:
+        - Uncleared read register
+        - Partial reset of sensitive resources
+        - No scrub on exit/idle paths.
+    CWE-1256:
+        - Sensitive hardware feature exposes as simple register file.
+        - No privilege gating on key storage interface
+        - Default open interface to secret-bearing registers.
+    CWE-1262:
+        - No access control when en && !we, or on write path
+        - Default allow policy
+        - No lock bits or write once protection
+        - Untrusted control of access signals
+    CWE-1300:
+        - No direct key-dependent branching observed
+        - No explicit vulnerability
 5. Testbench Generation
+    First Testbench successfully generated and compiled.
+    Second Testbench failed to compile due to create a syntax error.
+
 6. Simulation
+Run 1
+    --- CWEΓÇæ226: Sensitive Information Not Removed Before Reuse ---
+    READ addr=0 -> xxxxxxxx
+    After reset, rdata_reg STILL = deadbeef (should be 0)
+    Idle mode: rdata STILL = deadbeef (should be scrubbed)
+
+    --- CWEΓÇæ1256: Improper Restriction of Software Interfaces ---
+    READ addr=1 -> deadbeef
+    READ addr=2 -> cafebabe
+    Unprivileged write/read succeeded (should fault or deny)
+
+    --- CWEΓÇæ1262: Improper Access Control for Register Interface ---
+    READ addr=0 -> bad0c0de
+    READ addr=1 -> deadbeef
+    READ addr=2 -> cafebabe
+    READ addr=3 -> bad0c0de
+    Read addr=5 -> 12345678 (default-open behavior)
+
+    --- CWEΓÇæ1300: Physical Side-Channel Weaknesses ---
+    READ addr=0 -> 00000000
+    READ addr=0 -> 00000000
+    Different key values cause different switching activity (visible in waveform).
+
+    --- TEST COMPLETE ---
+Run 2
+    Failed to compile
+Run 3
+    WRITE addr=0 priv=1 fault=0
+    WRITE addr=0 priv=1 fault=1
+    WRITE addr=1 priv=0 fault=1
+    READ addr=0 priv=1 -> 00000000 fault=1
+    READ addr=1 priv=1 -> 0000000X fault=0
+    READ addr=0 priv=1 -> 00000000 fault=0
+    READ addr=5 priv=1 -> 0000000X fault=0
+
+    --- SECURE TEST COMPLETE ---
+
 7. Code Repair
+    Run 1 (original) has multiple errors -> Code Repair -> Step 6, Run 2
+    Run 2 didn't occur -> Code Repair -> Step 6, Run 3
+    Run 3 passed all tests -> PASS
