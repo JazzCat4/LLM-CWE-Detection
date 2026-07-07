@@ -1,0 +1,161 @@
+1. Type Classification
+    226, 1189, 1260, 1262
+2. Asset Identification
+Assets:
+    - Secret data buffer (secret[])
+    - Ouput secret bus (secret_out)
+    - Control/State Registers (head, tail, and count)
+    - Status flags (empty and full)
+Privilege Boundaries:
+    - Inputs push, pop and secret_in are assumed to come from external logic. 
+      Boundary between external requesters/control and internal secret storage.
+    - secret_out to downstram logic
+    - Status signals to system control (empty and full can be observed by other modules)
+    - Implicit boundary (on-chip vs off-chip)
+Clock behavior:
+    - Single synchronous Clock (all states are updated on posedge clk)
+Reset Scheme:
+    - Synchronous Reset zeroes everything
+    - secret[] is not explicitly cleared on Reset
+    - When count is reset to 0, empty becomes 1 and full becomes 0, even if secret[] contains stale secrets.
+Adversary Capabilties:
+    - Control of push/pop can drain secrets and manipulate timing and occupancy.
+    - Control of secret_in can inject arbitary data into secret buffer.
+    - Clock manipulation
+    - Reset manipulation
+    - Observation of Status Outputs empty and full allow attackers to inger when secrets are being pushed/popped
+Present Security Rule:
+    - Conditional Write on Push
+    - Conditional Read On Pop.
+    - Occupancy-based status
+Absent Security Rule:
+    - Secret memory clearing
+    - No access control for push, pop or secret_in.
+FSM states:
+    - Implicit Pointer/Count state space
+    - Module creates an implicit FSM,  which is the combination of head (2 bits), tail (2 bits), and count (3 bits)
+    - Only legal states are when count is between 0 and 3, where head/tail correctly represents the positions of valid entries in secret[].
+    - Push operation transitions from n to n+1.
+    - Pop operation transitions from n to n-1.
+    - Both push and pop can occur at the same time ((push && !full) and (pop && !empty)), can confuse downstream logic.
+    - head, tail, count and secret_out are all 0 in the initial state and on rst, but the secret[] contents are undefined/stale.
+    - count can have values from 4-7 if pop/pushes are combined or if count is corrupted.
+    - Mismatches between count and valid entries in secret are logically illegal, but not detected.
+    - Pointer wrap-around combine with incorrect count can cause reads of stale/overwritten secrets without error signaling.
+3. Dependency Graph Analysis
+    - The FIFO’s dependency graph shows direct reachability from untrusted inputs to secret storage and secret output.
+    - Dominance analysis confirms that push and pop fully control secret writes/reads, with no privilege checks.
+    - Taint propagation shows that untrusted control signals can leak, corrupt, or reorder secrets, and reset does not sanitize memory, creating persistent taint.
+    - The design has no isolation, no access control, and no integrity checks on pointers or count, making it highly susceptible to misuse.
+4. CWE-Driven Review
+
+CWE-226:
+    - Secret buffer not scrubbed on reset
+    - Logical "empty" without physical wipe
+    - No guaranteed zero-write before reuse
+CWE-1189:
+    - Shared secret buffer with no domain partitioning.
+    - No access checks on control signals.
+    - Reset as a shared control with potential cross-domain impact.
+CWE-1260:
+    - Not directly applicable / no explicit protection ranges
+CWE-1262:
+    - No privilege checks on sensitive state updates
+    - Unprotected read path for secret data
+    - Default-open access policy
+5. Testbench Generation
+Testbench successfully created and exposes 
+6. Simulation
+Run 1 (No AI Code Repair)
+=== SECURITY TESTBENCH START ===
+
+[CWEΓÇæ226] Testing stale secret persistence across reset
+[CWEΓÇæ226] secret_out after reset pop = 0000000000000000 (should be 0 if scrubbed)
+
+[CWEΓÇæ1189] Testing untrusted agent overwriting trusted secrets
+[CWEΓÇæ1189] secret_out = 1111222233334444 (should NOT allow untrusted overwrite)
+
+[CWEΓÇæ1262] Testing unrestricted read/write access
+[CWEΓÇæ1262] Untrusted read returned = bad0bad0bad0bad0 (should be masked or denied)
+
+[CWEΓÇæ226 + CWEΓÇæ1189] Testing stale secret exposure after reset desync
+[CWEΓÇæ226/CWEΓÇæ1189] secret_out after reset = 0000000000000000 (should NOT leak stale secret)
+=== SECURITY TESTBENCH END ===
+
+Run 2 (First Repair)
+=== SECURE FIFO SECURITY TESTBENCH START ===
+
+[CWE-226] Testing scrub on reset
+[CWE-226] secret_out after reset pop = 0000000000000000 (expected 0)
+
+[CWE-1189] Testing isolation between trusted and untrusted writers
+[CWE-1189] secret_out = 0000000000000000 (expected 1111222233334444)
+
+[CWE-1262] Testing read access control
+[CWE-1262] secret_out (untrusted read) = 0000000000000000 (expected 0)
+
+[CWE-226 + CWE-1189] Testing scrub on domain switch
+[CWE-226/CWE-1189] secret_out after domain switch = 0000000000000000 (expected 0)
+
+=== SECURE FIFO SECURITY TESTBENCH END ===
+
+Run 3 (Second Repair)
+
+=== SECURE FIFO SECURITY TESTBENCH START ===
+
+[CWE-226] Testing scrub on reset
+[CWE-226] secret_out after reset pop = 0000000000000000 (expected 0)
+
+[CWE-1189] Testing isolation between trusted and untrusted writers
+[CWE-1189] secret_out = 0000000000000000 (expected 1111222233334444)
+
+[CWE-1262] Testing read access control
+[CWE-1262] secret_out (untrusted read) = 0000000000000000 (expected 0)
+
+[CWE-226 + CWE-1189] Testing scrub on domain switch
+[CWE-226/CWE-1189] secret_out after domain switch = 0000000000000000 (expected 0)
+
+=== SECURE FIFO SECURITY TESTBENCH END ===
+fixedEx4v2_tb.v:161: $finish called at 235000 (1ps)
+PS C:\Users\gabri\Downloads\Hardware-Vulnerabilities\Testing\CWE-226\Example 4>  iverilog -g2012 -o fixedEx4v3_tb.vvp fixedEx4v3.v fixedEx4v3_tb.v
+PS C:\Users\gabri\Downloads\Hardware-Vulnerabilities\Testing\CWE-226\Example 4> vvp fixedEx4v3_tb.vvp                                             
+=== SECURE FIFO SECURITY TESTBENCH START ===
+
+[CWE-226] Testing scrub on reset
+[CWE-226] secret_out after reset pop = 0000000000000000 (expected 0)
+
+[CWE-1189] Testing isolation between trusted and untrusted writers
+[CWE-1189] secret_out = 0000000000000000 (expected 1111222233334444)
+
+[CWE-1262] Testing read access control
+[CWE-1262] secret_out (untrusted read) = 0000000000000000 (expected 0)
+
+[CWE-226 + CWE-1189] Testing scrub on domain switch
+[CWE-226/CWE-1189] secret_out after domain switch = 0000000000000000 (expected 0)
+
+=== SECURE FIFO SECURITY TESTBENCH END ===
+
+Run 4 (Third Repair)
+
+=== SECURE FIFO SECURITY TESTBENCH START ===
+
+[CWE-226] Testing scrub on reset
+[CWE-226] secret_out after reset pop = 0000000000000000 (expected 0)
+
+[CWE-1189] Testing isolation between trusted and untrusted writers
+[CWE-1189] secret_out = 0000000000000000 (expected 1111222233334444)
+
+[CWE-1262] Testing read access control
+[CWE-1262] secret_out (untrusted read) = 0000000000000000 (expected 0)
+
+[CWE-226 + CWE-1189] Testing scrub on domain switch
+[CWE-226/CWE-1189] secret_out after domain switch = 0000000000000000 (expected 0)
+
+=== SECURE FIFO SECURITY TESTBENCH END ===
+
+7. Code Repair
+Run 1: Fails 2 tests -> Code Repair -> Step 6 Run 2
+Run 2: Failed 1 test -> Code Repair -> Step 6 Run 3
+Run 3: Failed 1 Test -> Code Repair -> Step 6 Run 4
+Run 4: Failed 1 Test -> FAIL
+
