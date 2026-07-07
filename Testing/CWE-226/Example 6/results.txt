@@ -1,7 +1,0 @@
-1. Type Classification
-2. Asset Identification
-3. Dependency Graph Analysis
-4. CWE-Driven Review
-5. Testbench Generation
-6. Simulation
-7. Code Repair

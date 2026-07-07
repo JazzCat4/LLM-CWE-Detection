@@ -1,0 +1,122 @@
+1. Type Classification
+    226, 1234, 1247, 1256, 1262, 1300
+2. Asset Identification
+    Assets:
+        - Secret key storage array (key)
+        - Key output register (key_out)
+        - FIFO Control State (head, tail, and count)
+    Privilege Domain Boundaries:
+        - External data -> Internal Secret storage
+        - Internal Secret Storage -> External Data Sink
+        - External Control -> Internal State Machine
+        - External Clock/Reset -> Internal Sequential Logic
+    Clock Behavior:
+        - Single synchronous clock domain updated on posedge clk.
+        - No clock gating or other protections.
+    Reset Schemes:
+        - Synchronous Reset through rst and posedge clk.
+        - Resets head, tail, count and key_out, but doesn't clear the contents of key.
+    Adversary Capabilities:
+        - Control of Data and Control Inputs
+        - Clock/Reset Manipulation
+    Present Security Rules:
+        - Occupancy Checks For Push/Pop
+        - Combinational Empty/Full Flags
+    Absent Security Rules:
+        - Off-by-one full condition. key's depth is 4 entires, but full is 1 when count = 3, allowing it to overflow if count = 4 or more.
+    FSM:
+        - FIFO oppupancy and pointer evolution
+        - Inconsistent Count vs Pointers
+        - Pointer Wrap and Overflow
+3. Dependency Graph Analysis    
+- The dependency graph shows direct, unprotected data flow from external input → internal secret storage → external output.
+- Reachability confirms all secrets remain externally reachable, even after reset.
+- Dominance analysis shows no security‑relevant node dominates access, meaning no mandatory check or privilege barrier exists.
+- Taint analysis reveals complete propagation of untrusted control and data into secret storage and back out, with no sanitization or isolation.
+
+4. CWE-Driven Review
+CWE-226:
+    - Uncleared storage on reset
+    - Resource reuse without explicit wipe
+CWE-1234:
+    - No lock bits
+    - Externally controllable Reset
+    - No protected read/write path for sensitive registers.
+    - Default-open access policy
+    - No lifecycle or privilege gating.
+CWE-1247:
+    - Single-cycle security decisions
+    - No glitch/voltage detection or error state
+CWE-1256:
+    - Unrestricted control of secret FIFO operations
+    - No privilege separation on key movement
+CWE-1262:
+    - Default open read path for secrets
+    - No write access control on secret storage.
+CWE-1300:
+    - Key-dependent switching activity in storage and output
+    - No constant-time or side-channel-aware behavior.
+5. Testbench Generation
+First Testbench successfully created and compiled.
+Second Testbench had a syntax error.
+Third Testbench created, no matching module.
+Fourth Generation Created a new module to go with the third testbench.
+6. Simulation
+Run 1:
+    === SECURITY TESTBENCH FOR secret_fifo START ===
+
+    [CWE-226] Zeroization and scrubbing checks
+    First pop (secret) key_out = deadbeeff00dbaad
+    Second pop (should be 0 if scrubbed) key_out = deadbeeff00dbaad
+    Pop after reset (should be 0 if zero-filled) key_out = 0000000000000000
+    Pop after reuse (should be new key only) key_out = 0000000000000001
+
+    [CWE-1234] Lock/Debug override checks (structural)
+    No lock bit or debug_mode signals exist in secret_fifo.
+    Any push/pop is allowed; no way to set or enforce a lock.
+    Unrestricted access key_out = aaaaaaaaaaaaaaaa (should require lock/priv)
+
+    [CWE-1247] Clock glitch behavior
+    Injecting clock glitch...
+    After glitch, key_out = 123456789abcdef0 (no glitch detection / safe state)
+
+    [CWE-1256/CWE-1262] Privilege and access control checks
+    Unprivileged-like access key_out = 0f0f0f0f0f0f0f0f (should be fault/denied)
+
+    [CWE-1300] Timing consistency for different keys
+    Push/pop take fixed cycles, but no masking/blinding is implemented.
+    Registers toggle directly with key bits ΓåÆ potential side-channel source.
+
+    === SECURITY TESTBENCH FOR secret_fifo END ===
+Run 2:
+    Failed to compile due to value-based error.
+Run 3: (Revised testbench)
+    [CWE-1247] Glitch handling
+    error_flag = 1, key_out = 0000000000000000 (should be 0)
+
+    [CWE-1256/CWE-1262] Privilege and access control
+    Unprivileged key_out (should be 0) = 0000000000000000
+    Privileged key_out (should be key) = 0000000000000000
+
+    [CWE-1300] Constant-time push/pop
+    Push/pop use fixed cycles; masking/blinding would be added at crypto layer.
+
+    === SECURE FIFO CWE TESTBENCH END ===
+Run 4:
+    
+[CWE-1247] Glitch handling
+error_flag = 1, key_out = 0000000000000000 (should be 0)
+
+[CWE-1256/CWE-1262] Privilege and access control
+Unprivileged key_out (should be 0) = 0000000000000000
+Privileged key_out (should be key) = 0123456789abcdef
+
+[CWE-1300] Constant-time push/pop
+Push/pop use fixed cycles; masking/blinding would be added at crypto layer.
+
+=== SECURE FIFO CWE TESTBENCH END ===
+7. Code Repair
+Run 1 (Original) -> Failed multiple tests -> Code Repair -> Step 6, Run 2
+Run 2 -> Failed to compile -> Code Repair -> Step 6, Run 3
+Run 3 (Only testbench) -> Failed 1 test -> Code Repair -> Step 6, Run 4
+Run 4 -> Passed all tests -> PASS
