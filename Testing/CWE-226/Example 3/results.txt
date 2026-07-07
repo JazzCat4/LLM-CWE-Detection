@@ -1,0 +1,135 @@
+1. Type Classification
+
+Register file | 226, 1262, 1256 | Sensitive key stored in registers; no access control; persistent secret data
+Crypto key storage | 1300, 226 | Keys readable/writable without protection
+Memory‑like read/write interface | 1189	| Acts like a small memory block with unrestricted access
+
+2. Asset Identification
+Assets:
+    - Seceet key storage
+    - Address selector
+    - Control signals
+Privilege Domain Boundaries:
+    - On-chip storage vs. external logic Boundary
+    - Potential secure vs. non-secure domain
+    - No explicit MPU/ACL Boundary
+Clock Behavior and Reset Scheme:
+    - Single synchronous clock, all operations occur on rising edge.
+    - No protections against clock manipulation
+    - Synchronous Reset only clears the output register.
+    - Internal secret_key array is not cleared on reset
+    - Reset doesn't disable read/writes after reset deassertation. Normal Operations resumes immediately.
+Adversary Capabilities:
+    - Control of external inputs write_en, read_en and drive addr 
+    - Can observe secret_key_out and read any stored key when read_en is asserted.
+    - Clock manipulation
+    - Reset manipulation
+    - No explicit JTAG/debug pins
+Present Security Rules:
+    - Synchronous updates (Keys are only written/read on posedge clk when write_en/read_en are high.)
+    - Output Reset Rule (secret_key_out becomes 0 when rst is asserted.)
+Absent Rules:
+    - No access controls or privilege checks on the enables or addr.
+    - No polict restriction which domains can read keys or under which conditions.
+    - No zeroization of the internal secret_key on reset or other events.
+    - No integrity protection
+    - No confidentiality protections for secret_key_out
+FSM states:
+    - No explicit FSM
+    - Implicit states:
+        - Reset state
+        - Write-only cycle
+        - Read-only cycle
+        - Read-write cycle
+        - Idle cycle
+    - Implicit transitions are driven by the combinational of rst, write_en. read_en and addr on each clock edge.
+    - No illegal states are defined.
+3. Dependency Graph Analysis
+    - Simple But Exposed Data Path: External Input -> Internal Key Storage -> External Output
+    - Reachability: Every key slot is reachable from external inputs and can be externally read.
+    - Dominance: Only clk and rst dominate behavior, no security-relevant signal dominates access.
+    - Taint propagation: Untrusted inputs fully taint key storage and can cause key leakage.
+    - No privilege Boundaries, no access control, no protection against tainted control signals.
+4. CWE-Driven Review
+    - CWE-226
+        - Uncleared key storage
+        - Reassignment without zeroization
+        - Partial reset of sensitive resources
+    - CWE-1189
+        - Shared key storage with no trust partitioning
+        - No access checks on shared resources
+        - Shared reset clock domain risk if used across domains
+    - CWE-1256
+        - Unrestricted control of key write/read interface
+        - Sensitive hardware feature exposed as generic interface
+    - CWE-1262
+        - No privilege/trust checks on sensitive registers
+        - Default open access policy
+        - No write-once lock bits or hardware-derived privilege signals.
+    - CWE-1300
+        - Key-dependent storage and output activity
+        - No constant-time or masking measures.
+5. Testbench Generation
+    Testbench successfully created.
+6. Simulation
+Run 1 (No Code Repair)
+    === CWE Vulnerability Validation Testbench ===
+
+    CWE-226 TEST: Keys persist across reset (should NOT happen)
+    After reset, secret_key_out = deadbeefdeadbeefdeadbeefdeadbeef (should be 0, but key persists!)
+
+    CWE-1189 TEST: Untrusted agent can read/write all key slots
+    Untrusted read of key slot 3 = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa (should be blocked!)
+
+    CWE-1256 TEST: Unprivileged writes allowed
+    Unprivileged write/read of key slot 0 = bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb (should fault!)
+
+    CWE-1262 TEST: No read/write access control
+    Read of sensitive key slot 2 = cccccccccccccccccccccccccccccccc (should be masked!)
+
+    CWE-1300 TEST: Key-dependent switching activity
+    Key-dependent output = ffffffffffffffffffffffffffffffff (switching reveals key bits!)
+
+    === END OF TESTS ===
+    
+Run 2 (First Code Repair)
+    === Secure Module CWE Validation Testbench ===
+
+    CWE-226: Verify keys are scrubbed on reset and zeroize
+    After reset, secret_key_out = a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5 (should be 0)
+    After zeroize, secret_key_out = a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5 (should be 0)
+
+    CWE-1189/1256/1262: Block unprivileged/non-secure access
+    Unprivileged read, secret_key_out = 00000000000000000000000000000000 (should be 0)
+    Privileged read after unprivileged write attempt, secret_key_out = 1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e (should be masked original key, not C's)
+
+    CWE-1262: Lock keys and deny further reads
+    Read with lock_keys=1, secret_key_out = 00000000000000000000000000000000 (should be 0)
+
+    CWE-1300: Masked output reduces direct key correlation
+    Masked key output = 1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e (should differ from raw stored key)
+
+    === END OF SECURE TESTS ===
+
+Run 3
+    === Secure Module CWE Validation Testbench ===
+
+    CWE-226: Verify keys are scrubbed on reset and zeroize
+    After reset, secret_key_out = 00000000000000000000000000000000 (should be 0)
+    After zeroize, secret_key_out = 00000000000000000000000000000000 (should be 0)
+
+    CWE-1189/1256/1262: Block unprivileged/non-secure access
+    Unprivileged read, secret_key_out = 00000000000000000000000000000000 (should be 0)
+    Privileged read after unprivileged write attempt, secret_key_out = 1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e (should be masked original key, not C's)
+
+    CWE-1262: Lock keys and deny further reads
+    Read with lock_keys=1, secret_key_out = 00000000000000000000000000000000 (should be 0)
+
+    CWE-1300: Masked output reduces direct key correlation
+    Masked key output = 1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e (should differ from raw stored key)
+
+    === END OF SECURE TESTS ===
+7. Code Repair
+Run 1 failed 5 tests -> Code Repair using LLM -> Step 6
+Run 2 failed 3 tests -> Code Repair with LLM Again -> Step 6
+Run 3 failed 0 tests -> PASS
