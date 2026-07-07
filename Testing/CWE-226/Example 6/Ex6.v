@@ -37,5 +37,5 @@ module secret_fifo (
         empty = (count == 0);
         full  = (count == 3);
     end
-
+    
 endmodule
