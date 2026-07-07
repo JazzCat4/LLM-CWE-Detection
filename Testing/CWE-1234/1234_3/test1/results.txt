@@ -1,0 +1,32 @@
+TYPE CLASSIFICATION
+Module types: Register file / CSR, Debug / JTAG / test interface
+Relevant CWEs: 226, 1256, 1262, 1191, 1234
+
+ASSET IDENTIFICATION
+Assets: Protected register, lock bit, debug mode control, write_en
+Priv. domains: External inputs vs internal state, normal vs. debug privilege domain, lock stat boundary
+Clock and reset: Reset clears protected_reg and returns lock state to unlocked
+Adversary capabilities: Driving external inputs, abuse of debug domain
+Security rules: Normal writes allowed only when write_en and !lock_bit. Intended rule: once locked, normal writes should be blocked. Debug_mode removes the lock constraint
+States/transitions: locked vs unlocked
+
+PDG ANALYSIS
+All external inputs are reachable to the core assets, making them critical attack surfaces
+CLK and RST dominate state behavior, but debug_mode dominates the protection logic
+Taint from untrusted data_in, write_en, and debug_mode flows directly into both the protected data and the lock state
+Debug path is the most security_critical
+
+CWE DRIVEN REVIEW
+1191: Debug backdoor that can arbitrarily write a sensitive register and modify its lock state
+1234: Lock bit is explicitly bypassed whenever debug_mode is asserted (intended vulnerability)
+1262: No privilege check on writes to protected_reg and lock bit, access policy is default-allow
+1256: Exposes hardware control features (lock and protected config register) via simple inputs with no privilege gating
+226: No explicit scrub when the lock is set or when debug mode writes new values over old ones.
+
+TESTBENCH GENERATION
+Testbench generated successfully, showing all vulnerabilities.
+Note: One test was performed to test if data is scrubbed after the lock bit is set, but for the lock bit to be set, a certain data value needs to be entered (therefore changing the data in the protected register).
+
+CODE REPAIR
+Generated new testbench, and new module. Testbench is fine. New module has one small error, where lock bit is not initialized (has value of x) until it is set, so functionality does not work. After one more iteration, AI is able to fix this by recommending a fix to set lock bit on reset to 0 (after it took it out).
+Otherwise, fixes implemented correctly!
