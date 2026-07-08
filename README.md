@@ -1,4 +1,4 @@
-# Hardware-Vulnerabilities
+# LLM-Assisted Detection and Repair of Hardware Security Vulnerabilities in Verilog Designs
 
 # Abstract
 
