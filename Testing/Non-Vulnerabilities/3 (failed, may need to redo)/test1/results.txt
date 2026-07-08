@@ -1,0 +1,29 @@
+TYPE CLASSIFICATION
+Module type: Clock / power / reset
+Relevant CWEs: 1234, 1247
+
+ASSET IDENTIFICATION
+Assets: data_out register, implicit "priv. bit" via usr_id == 3'h4
+Boundaries between privilege domains: Input -> internal access control. Input -> output register.
+Clock and reset: Sequential logic on POSEDGE CLK. Active-low reset, only data_out is cleared.
+Adversary capabilities: Manipulating input data, clk, reset.
+Security rules: Access control only when usr_id == 3'h4. On reset, data_out is forced to 0.
+States: grant_access = 0 vs 1.
+
+PDG ANALYSIS:
+Reachability: Untrusted inputs are both reachable to data_out. 
+Taint: usr_id control whether data_in can taint data_out.
+Dominance: Usr_id comparison dominates writes from data_in
+
+CWE DRIVEN REVIEW
+1247: Single-cycle security-critical comparison with no redundancy. No glitch monitoring or fault response. Asynchronous, externally-controllable reset on a security-relevant register. Mixed blocking/non-blocking assignments in security-critical logic.
+1234: NONE
+
+TESTBENCH GENERATION
+Testbench generated targeting 1247. Most tests passed, however reset glitch caused unpredictable state, and debug override bypassed the lock.
+
+CODE GENERATION
+Fixes: Treats access control as fail=closed on any anomaly.
+Adds glitch input
+Uses non-blocking assignments consistently.
+Ensures reset and error both force a safe default state.
