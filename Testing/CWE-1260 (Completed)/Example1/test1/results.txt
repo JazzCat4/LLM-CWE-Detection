@@ -1,0 +1,37 @@
+TYPE CLASSIFICATION
+Module type: Register file / CSR, SoC bus / interconnect / Memory Protection Unit
+Relevant CWEs: 226, 1256, 1262, 1189, 1260
+
+ASSET IDENTIFICATION
+Assets: region config. register, protected region constants
+Priv. domain boundaries: Inputs from software, boundary crossed into hardware. Protected vs. non-protected address space
+Clock and reset: All states updated on POSEDGE CLK. Reset clears region start and end config register.
+Adversary capabilities: Config manipulation, address manipulation, reset and clk manipulation.
+Security rules: Protected-address space rule
+
+PDG ANALYSIS
+Reachability: Untrusted config inputs and acess addresses are directly reachable to the authorization output access_allowed through a small number of nodes
+Dominance: Protection condition dominates all accepted configs, but it is partial.
+Taint: Untrusted software can indirectly control which accesses are authorized with only a limited guard on the start address, making misconfiguration or malicious configuration a realistic risk.
+
+CWE DRIVEN REVIEW
+1260: Unrestricted cfg_end (overlap allowed)
+1262: No priv. check on writes. Sensitive configuration exposed to untrusted software
+1256: Access-control hardware fully software-programmable. No lock-after-boot mechanism
+1189: Shared access control without domain tagging. Lower-trust agents can affect higher-trust protection.
+226: Region registers not scrubbed on reconfiguration.
+
+TESTBENCH GENERATION
+testbench generated targeting all vulnerabilities reviewed. 
+226 tests scrubbing when reconfiguring cfg_start and cfg_end. This test doesn't work, as it simply overwrites these values and checks to see if theyre different, although it is correct that there is no scrubbing before overwriting.
+1189 simulates an untrusted agent writing the configuration. This test doesn't work as it is simply testing normal functionality, and pretending that an untrusted agent is the one doing it.
+1256 does the same as 1189.
+1260 is the only coherent test, finding the actual vulnerability (overlapping of regions)
+1262 also does the same as 1189, confirming any agent can write the configuration. Simply shows that there are no privilege checks.
+
+CODE REPAIR
+Fixed: Hardware now properly detects any overlap between programmable region and protected region.
+A priv. signal gates all configuration writes
+A small FSM ensures that region_start / region_end are explicitly scrubbed before installing a new configuration.
+
+All fixes implemented correctly, and new tesbench generated has working and accurate tests that all pass. Module passes!
