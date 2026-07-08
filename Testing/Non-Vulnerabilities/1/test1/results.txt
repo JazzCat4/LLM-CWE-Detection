@@ -1,0 +1,24 @@
+TYPE CLASSIFICATION
+Module type: Clock / power / reset logic
+Relevant CWEs: 1234, 1247
+
+ASSET IDENTIFICATION
+Assets: State register, output and input.
+Privilege domain boundaries: No explicit secure/non-secure partitioning is defines; all control is flat
+Clock / reset: Synchronous state on POSEDGE CLK. Active-low reset.
+Adversary capabilities: Manipulate user input, toggle rst_n if accessible, manipulate clock.
+Security rules: No explicit security policy.
+FSM states: S0 - S3, on reset -> S0. Defines state transitions depending on user input as well. No illegal states.
+
+PDG ANALYSIS
+Reachability: All external inputs are transitively connected to out via state.
+Dominance: State is a central dominate, any influence from external signals to out must pass through state.
+Taint: Taint from user_input flows unimpeded to state and then to out, making out fully controlled by the untrusted input and any adversarial manipulation of reset/clock behavior.
+
+CWE DRIVEN REVIEW
+1234: No vulnerabilities found
+1247: Lack of glitch detection or monitoring. Single-cycle, non-redundant state updates. FSM with no error or fault state.
+
+TESTBENCH GENERATION
+Tests for 1234 not generated since no test interface exists for this module.
+The AI model attempted to inject glitches via resetting the module, and performing unexpected toggles of the CLK signal. These had no effect. The testbench also forces the highest state on the DUT, then releases it. Again, module performs as normal. All tests passed, so module is good.
