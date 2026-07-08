@@ -1,0 +1,88 @@
+1. Type Classification
+    CWE-226, CWE-1247, CWE-1256, CWE-1262, CWE-1300
+2. Asset Identification
+    Assets
+        - Secret key input (secret_key)
+        - Internal key register (key_reg)
+        - Base inpust (base) and internal base register (base_reg)
+        - Result Register (result)
+    Privilege Domain Boundaries
+        - Off-chip inputs to on-chip logic
+        - On-chip internal state to off-chip output
+        - Reset control and clock
+    Clock Behavior
+        - Single synchronous domain with asynchronous Reset
+    Reset Schemes
+        - Asynchronous reset that initializes sensitive asset
+        - Effectively load-secret operation
+    Adversary Capabilities
+        - Control of external data inputs
+        - Clock/reset manipulation
+    Present Security Rules
+        - Conditional computation based on key bits
+        - Computation only proceeds while key_reg != 0
+    Absent Security Rules
+        - No explicit clearing of sensitive state.
+    FSM
+        - Implicit states only
+        - Reset/Initialization state
+        - Active computation state
+        - Idle/Done state
+        - Transition Rules
+            Reset -> Active -> Idle -> Active
+        - Glitched rst_n during posedge clk can cause simultaneous reset/computation, and partially updated registers.
+        - No explicit handling for metastability or partial reset
+        - No guard against secret_key == 0 or malformed inputs.
+3. Dependency Analysis Graph
+    Reachability:
+        - Secret-dependent behavior is externally observable. (secret_key -> key_reg -> control_condition_2 -> result_update -> result)
+        - base reaches result through: base -> base_reg -> result_update -> result
+        - rst_n reaches all internal registers
+        - clk reaches every sequential element
+    Dominance:
+        - rst_n dominates key_reg/base_reg/result initialization.
+        - key_reg dominates all computation steps
+        - clk dominates all state transitions
+        - Fully dominated by secret-dependent control flow
+    Taint Analysis:
+        - secret_key taints key_reg, which taints control_condition_1 and control_condition_2, result, and base_reg.
+        - base taints base_reg, which taints result and base_reg_update.
+        - rst_n taints all registers
+        - clk taints all sequential updates
+        - result output is tainted by both secret_key and base.
+4. CWE-Driven Review
+CWE-226:
+    - key_reg holds secret key is never explicitly zeroed.
+    - On reset, key_reg and base_reg are reloaded with new secret_key and base without clearing old sensitive contexts.
+    - Reset logic initializes sensitive registers with secrets instead of clearing them.
+CWE-1247:
+    - Security-critical conditions (loop control) and key_reg[0] (conditional multiply) are evaluated in single cycle with no checks, leaving it vulnerable to clock/voltage glitches.
+    - No glitch detection, frequency monitor or brownout indication.
+    - Asynchronous reset can be glitched to partially load secrets or disturb state
+CWE-1256:
+    - Interface (secret_key, base, rst_n, clk) has no privilege gating
+    - Reset and clock are not protected by any privilege or lifecycle mechanism
+CWE-1262:
+    - The effective registers (key_reg, base_reg, result) have no access control.
+    - No default-deny policy or lock bits
+CWE-1300:
+    - Control flow is directly key-dependent
+    - Loop iterations depends on the bit pattern of key_reg
+    - Operand activity is driven by secret-controlled conditions.
+5. Testbench Generation
+    Testbench compuler with syntax error.
+6. Simulation
+Run 1 (Original) did not occur (syntax error in Testbench)
+    1300_2_tb.v:116: syntax error
+    1300_2_tb.v:116: Syntax in assignment statement l-value.
+    1300_2_tb.v:127: syntax error
+    1300_2_tb.v:127: Syntax in assignment statement l-value.
+Run 2
+    [CWE-226] First result: 7a73
+    [CWE-226] Second result (after scrub): 9d71
+    [CWE-1247] After glitch_detect: error=1, result=0000
+    [CWE-1256/1262] Unprivileged: result=0000 (should not change meaningfully), error=1
+    [CWE-1300] cycles_short=8, cycles_long=8 (should be equal)
+7. Code Repair
+Run 1 failed to compile -> Code Repair -> Step 6, Run 2
+Run 2 passed all tests -> PASS
