@@ -1,0 +1,24 @@
+TYPE CLASSIFICATION
+Module type: Clock / power /reset logic
+Relevant CWEs: 1234, 1247
+
+ASSET IDENTIFICATION
+Assets: Shift register contents, output flag (detect)
+Privilege-domain boundaries: Input domain -> module domain. Module domain -> output domain. No explicit priv./unpriv. partitioning
+Clk and reset: Sequential logic triggered on POSEDGE CLK. Active-low reset. On reset, shift_reg is forced to 0.
+Adversary capabilities: Manipulate input, reset, clock
+Security rules. None
+States / transitions: Implicit FSM via shift_reg. Transition on each posede clk. Detect = 1 if certain state.
+
+PDG ANALYSIS
+All internal state is directly derived from untrusted input.
+Output is fully attacker-controlled through taint propagation.
+Clock and reset dominate state updates; glitching either can force or prevent state transitions
+No illegal states exist, no security rules, priv. boundaries.
+
+CWE DRIVEN REVIEW
+1234: NONE
+1247: No glitch detection. Single-cycle, non-redundant decision on detect. Asynchronous reset with no glitch hardening. FSM has no error or safe state. (Although default state does exist).
+
+TESTBENCH GENERATION
+Had to ask to generate testbench that allowed us to view the state of the DUT. All test passed (no issues), however when showing AI results, it misinterpreted the shown results. Otherwise, module passes
