@@ -1,0 +1,23 @@
+TYPE IDENTIFICATION
+Module type: Clock / power / reset
+Relevant CWEs: 1234, 1247
+
+ASSET IDENTIFICATION
+FSM state register, completion flag, control input.
+Boundaries: input vs output 
+Clock and reset: State transitions on posedge clk. Reset clears stage.
+Adversary capabilities: Manipulating start, rst, clk
+FSM states / transitions: State 00 - 11, and transition rules defined. No illegal states.
+
+PDG ANALYSIS
+Reachability: All FSM states are reachable; done is reachable from any state via deterministic transitions
+Dominance: clk dominates all sequential updates; state_reg dominates done_reg; start does not dominate any node
+Taint: Any untrusted manipulation of inputs propagates to state_reg and ultimately to done_reg. No protection against timing or reset glitches.
+
+CWE DRIVEN REVIEW
+1234: NONE
+1247: Single-cycle security-relevant decision with no redundancy. Security-relevant FSM with no error/glitch-detection state. No voltage/clock glitch detection or monitoring.
+
+TESTBENCH GENERATION
+Testbench created successfully showing state of module under different tests. Module resumes expected behavior, all tests passed. 
+Note: AI did not start the module during some tests.

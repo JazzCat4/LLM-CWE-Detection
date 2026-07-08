@@ -1,0 +1,26 @@
+TYPE CLASSIFICATION
+Module type: Clock / power / reset logic
+Relevant CWEs: 12347, 1234
+
+ASSET IDENTIFICATION
+Assets: FSM state register, done control signal
+Boundaries: External control input, clock and reset domain vs FSM.
+Clock and reset: Primary FSM on POSEDGE CLK OR NEGEDGE RST. Output logic on POSEDGE CLK. Active-low reset, sets stage = 2'b00.
+Adversary capabilities: Manipulating start, clk, reset
+Security rules: None
+FSM states: S0 - S3, and transitions defined
+No illegal states.
+
+PDG ANALYSIS
+Reachability: All inputs can reach the output through the FSM
+Dominance: Clk dominates state transitions; Stage dominates done
+Taint: All external inputs taint the FSM state and therefore taint the done output
+
+CWE DRIVEN REVIEW
+1234: None
+1247: Single-cycle decision. Glitch-able FSM (no error state). Asynchronous reset vulnerability. No glitch detection or monitoring
+
+TESTBENCH GENERATION
+could not get it to generate a coherent testbench
+
+ 
