@@ -1,0 +1,119 @@
+1. Type Classification
+    CWE-226, CWE-1262, CWE-1256, CWE-1300
+2. Asset Identification
+    Assets:
+        - Priviledge indicator (sw_privileged)
+        - Accelerator enable (accel_enable)
+        - Control register (ctrl_reg)
+        - Software register interface (sw_we, sw_addr, sw_wdata, sw_rdata)
+    Boundaries:
+        - Software and Hardware through CSR interface
+        - Priviledge and unprivileged domains (sw_privileged)
+        - Secure accelerator and the rest of the SoC (accel_enable)
+    Clock behavior:
+        - Single synchronous clock on always block.
+        - All states updated on posedge clk.
+        - No clock gating, domain crossing, etc.
+    Reset Scheme:
+        - Asynchronous reset [always @(posedge clk or posedge reset)]
+        - Clears ctrl_reg and accel_enable.
+        - Assures accelerator is disabled at power on, but doesn't lock or restrict later writes.
+    Adversary capabilities:
+        - Software attacker
+        - Bus/register interface manipulation (allows attacker to control ctrl_reg and accel_enable)
+        - Clock/reset manipulation
+    Present Security Rules:
+        - Reset defaults to safe state 
+        - Address-based access to control register
+        - Read-only default value for unmapped address
+    Absent Security Rules:
+        - Priviledge enforcement
+        - Bit-masking / write Restriction
+    FSM:
+        - No explicit FSM
+        - Only state in implicit is the value of ctrl_reg[0] and accel_enable. 0 (disabled), 1 (enabled)
+        - Other bits of ctrl_reg "don’t care" 
+        - No illegal states or rules
+        - Any 32 bit value is accepted 
+        - Unprivileged Write enabling accelerator is logically illegal, but does not encode or prevent it.
+3. Dependency Graph Analysis
+    Reachability:
+        - Sensitive path exists (sw_wdata -> ctrl_reg -> accel_enable)
+        - Always reachable when sw_we = 1 and sw_addr = ADDR_CTRL.
+        - sw_privileged does not influence any node or is any part of a reachable path.
+        - rst reaches both ctrl_reg and accel_enable directly, ensuring an initial safe state.
+    Dominance:
+        - Address and write enable dominates register updates.
+        - ctrl_reg domainates accel_enable (accel_enable <= ctrl_reg[0])
+        - No node dominates privilege because it is unused.
+    Taint Propagation:
+        - ctrl_reg is fully tainted.
+        - accel_enable becomes tainted by result.
+        - sw_rdata is tainted when reading ctrl_reg.
+        - Privilege signal doesn't sanitize taint.
+4. CWE-Driven Review
+    CWE-226:
+        - No scrub on context change/Reuse
+        - Assumption of reset as sole clearing mechanism
+    CWE-1256:
+        - Unprivileged control of secure accelerator
+        - Mixed privilege register without per-field context
+        - No lock/boot-time protection
+    CWE-1262:
+        - Missing privilege check on write path
+        - Unused privilege signal (broken access control hook)
+        - Default-open policy for sensitive CSR
+        - Read path exposes sensitive configuration
+        - No lock bits or write-once protection.
+    CWE-1300:
+        - Not evidently triggered
+        - Module exposes a single enable bit (accel_enable)
+        - Doesn't implement cryptographic operations, secret-dependent branching, or key comparisons.
+        - No direct side-channel relevant logic.
+5. Testbench Generation
+    First and second testbench successfully generated and compiled.
+6. Simulation
+Run 1
+    === Starting Vulnerability Testbench ===
+
+    [TEST] Unprivileged write to privileged accelerator control
+    accel_enable = 1 (EXPECTED: 1, demonstrates vulnerability)
+
+    [TEST] Privileged vs unprivileged writes behave identically
+    accel_enable = 0 (EXPECTED: 0, but privileged/unprivileged treated same)
+
+    [TEST] Sensitive register persists across context switch
+    accel_enable before context switch = 1
+    accel_enable after context switch = 1 (EXPECTED: still 1, demonstrates persistence)
+
+    [TEST] Reset clears sensitive register (only scrub path)
+    accel_enable after reset = 0 (EXPECTED: 0)
+
+    [TEST] No crypto datapath present; CWE-1300 not applicable to this module
+
+    === Vulnerability Testbench Complete ===
+
+Run 2
+    === Starting Secure Module Testbench ===
+
+    [TEST] Unprivileged write to CTRL must NOT enable accelerator
+    accel_enable = 0 (EXPECTED: 0)
+
+    [TEST] Privileged write to CTRL enables accelerator
+    accel_enable = 1 (EXPECTED: 1)
+
+    [TEST] Loss of privilege scrubs CTRL and disables accelerator
+    accel_enable after privilege drop = 0 (EXPECTED: 0)
+
+    [TEST] Locking CTRL prevents further writes
+    accel_enable before lock = 1 (EXPECTED: 1)
+    accel_enable after locked write = 1 (EXPECTED: 1, unchanged)
+
+    [TEST] Reset scrubs CTRL and disables accelerator
+    accel_enable after reset = 0 (EXPECTED: 0)
+
+    === Secure Module Testbench Complete ===
+
+7. Code Repair
+Run 1 (Unedited) -> Multiple Errors -> Revise, then Step 6, Run 2
+Run 2 -> Passed all tests -> PASS
