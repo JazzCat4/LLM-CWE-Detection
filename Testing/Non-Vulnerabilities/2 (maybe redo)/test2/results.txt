@@ -1,0 +1,26 @@
+TYPE CLASSIFICATION
+Module type: Clock / reset, Register file / CSR
+Relevant CWEs: 1247, 1234, 226, 1262, 1256
+
+ASSET IDENTIFICATION
+Assets: Count register, state register, led output, value input, enable input
+Privilege domain boundaries: No explicit secure/non-secure
+Clock and reset: Single synchronous process on POSEDGE CLK. Active-low reset, resets count and state registers
+Adversary capabilities: Manipulate external control/data pins, clock, reset. Could observe outputs.
+Security rules: None
+FSM states / transitions: State 0-2 defined, and transitions.
+
+PDG ANALYSIS
+Reachability: All internals nodes are reachable from untrusted inputs
+Dominance: Reset and FSM state values strictly govern when updates occur.
+Taint: end-to-end taint flow from untrusted inputs to the output led, meaning the design exposes internal state influenced by external data without any sanitization or priv. checks
+
+CWE DRIVEN REVIEW
+1262: Unprotected internal registers
+1256: Unprivileged control over hardware behavior
+226: No scrub on all exit paths
+1247: Single-cycle, glitch-sensitive decisions. No glitch/voltage monitoring. No error or safe states.
+1234: None.
+
+TESTBENCH GENERATION
+Although there is nothing wrong with the module, the testbench generated tests for behavior that is intended (such as not scrubbing data after returning to state 0, and instead adding to the count register. Seems AI is misinterpreting the behavior of the module and what it is trying to achieve. Although tests technically failed, no code repair was done as AI will likely change the behavior of the module.
