@@ -1,0 +1,98 @@
+1. Type Classification
+    CWE-226, CWE-1247, CWE-1300
+2. Asset Identification
+    Assets
+        - Base operand
+        - Exponent operand
+        - Computation result
+        - Control state
+        - Completion flag
+    Privilege Domain Boundaries
+        - Off-chip -> on-chip through inputs base, exponent, start, rst and clk.
+        - On-chip -> Off-chip through result and done
+        - No secure/privileged separation
+        -  Implict Boundary bwtween FSm and arithmetic core
+    Clock Behavior
+        - Single synchronous clock. All state updates occur on rising edge.
+    Reset Schemes
+        - Active high reset on posedge rst. Everything is cleared except base_reg and exp_reg.
+        - Internal operands may still hold previous data until overwritten after a reset.
+    Adversary Capabilities
+        - Can toggle start to trigger computations, and supply arbitrary base/exponent values.
+        - Clock/reset manipulation
+        - Can observe outputs result and done
+        - No explicit JTAG/debug pins
+    Present Security Rules
+        - No explicit Rules
+        - Computation only starts when state is high in Idle state.
+        - Result is only committed to when exp_reg == 0 in RUN state.
+    Absent Security Rules
+        - No restriction on who can assry rst or start.
+        - No protection against readinf result before completion.
+        - No rule to clear base_reg/exp_reg adter use/reset.
+        - No rule to handle illegal FSM states or clock/reset errors.
+        - No checks on operands ranges, privilege bits, no secure mode, etc.
+    FSM
+        - IDLE (2'd0), RUN (2'd1), DONE(2'd2)
+        - 2'b11 is unused and is therefore implicitly illegal.
+
+3. Dependency Analysis Graph
+    Reachability:
+        - Every internal node is reachable from external inputs.
+        - FSM states are reachable from start and rst.
+        - Outputs are reachable from all internal registers.
+        - Note: No isolation boundary
+    Dominance:
+        - state dominates all arithmetic operations.
+        - rst dominates initial values of state, result, res_reg, and done.
+        - exp_reg, dominates loop determination and result commitment.
+        - base_ref doesn't dominate any control path (only involved in arithmetic)
+        - start only dominates the transition from IDLE -> RUN
+        - Faults in state or rst can bypass or terminate computation.
+    Taint Analysis:
+        - No taint containment, all outputs are from untrusted inputs
+        - Vulnerable to fault injection, timing manipulation, side-channel leakage and malicious operand selection.
+4. CWE-Driven Review
+CWE-226:
+    - Uncleared operand registers on reset
+    - No scrub on operation exit
+    - Reuse without guaranteed zero-write
+CWE-1247:
+    - Single-cycle critical decision without redudancy
+    - FSM with no error/glitch state
+    - No glitch detection/monitoring
+CWE-1300:
+    - Secret-dependent branching
+    - Secret-dependent timing (non-constant time loop)
+    - No masking or constant-time enforcement.
+5. Testbench Generation
+    First test bench contained syntax errors.
+6. Simulation
+Run 1:
+    1300_3_tb.v:89: syntax error
+    1300_3_tb.v:89: Syntax in assignment statement l-value.
+    1300_3_tb.v:91: syntax error
+    1300_3_tb.v:91: Syntax in assignment statement l-value.
+Run 2:
+    fixed1300_3v1_tb.v:90: syntax error
+    fixed1300_3v1_tb.v:90: error: malformed statement
+    fixed1300_3v1_tb.v:91: syntax error
+    fixed1300_3v1_tb.v:91: error: malformed statement
+Run 3:
+    === CWE Security Testbench Start ===
+    [CWE-226] Testing scrubbing behavior
+    First result: d0d210c3
+    Second result: 11110c84
+
+    [CWE-1247] Testing glitch detection
+    Check waveform: state should be ERROR.
+
+    [CWE-1300] Testing constant-time behavior
+    High-HW cycles: 330
+    Low-HW cycles: 330
+    Both should match (constant-time).
+    === CWE Security Testbench Complete ===
+7. Code Repair
+Run 1 (Original) failed to compile.
+Run 2 failed to compile.
+Run 3 passed all tests -> PASS
