@@ -33,8 +33,7 @@ Our methodology was designed through the analysis of CWE entries (MITRE, 2025), 
 
 Given an RTL Design, the role and features of the module are first identified. The module is then analyzed to determine important assets, behavior, data, and control flow. A CWE-driven review is then done utilzing the results of the analysis and module to identify potential vulnerabilties. A testbench is then created based off of potential and suspected vulnerabilities. The module is tested using the testbench, and reparied utilizing CWE-Design rules until the module passes simulation. We utilized Microsoft Copilot as the LLM to judge performance; Other models may yield different result.
 
-<img width="917" height="476" alt="CWE Detection Methodology Flowchart" src="https://github.com/user-attachments/assets/75bb6aa5-7993-4285-9308-ac51683d81b9" />
-
+<img width="1280" height="720" alt="Methodology Flowchart" src="https://github.com/user-attachments/assets/17d01cc1-edea-47c9-9a1c-a2b0b6c53b71" />
 ##### Figure 1: High-Level Graph of Methodology
 
 ## 3.1 Type Classification
