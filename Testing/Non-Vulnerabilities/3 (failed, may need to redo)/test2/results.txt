@@ -1,0 +1,30 @@
+TYPE CLASSIFICATION
+Register file / CSR, Clock / reset logic.
+Relevant CWEs: 226, 1262, 1256, 1247, 1234
+
+ASSET IDENTIFICATION
+Asset: data_out register, grant_access priv. bit, usr_id value.
+Privilege boundary: usr_id domain -> internal register write.
+Click and reset: Synchronous logic on POSEDGE CLK. Active-low reset. On reset, data_out forced to 0.
+Adversary capabilities: manipulation of usr_id, data_in, clk, rst.
+Security rules: Privileged write condition.
+States / transitions: Reset and operational state. 
+
+PDG ANALYSIS
+Reachability: usr_id and data_in can both reach and influence data_out
+Dominance: grant_access dominates all non-reset updates to data+out, making it the key priv. gate.
+Taint: Taint from untrusted inputs can reach data_out if usr_id is set to the priv. value (4).
+
+CWE DRIVEN REVIEW
+226: Unscrubbed reuse of data_out.
+1262: No lock bits or write-once protections
+1256: Unpriv. control of privileged write gate (if software controllable)
+1247: Single-cycle security decision. No glitch detection or monitoring. 
+1234: NONE
+
+TESTBENCH GENERATION
+testbench generated tested for all relevant CWEs, but most test are not accurate. 226 checks if sensitive data persists from priv.->unpriv. state, which is true; However one could argue this is the intention of the module, a privileged signal writes to output, and that output stays until the next write.
+When testing 1262, the testbench also tests a situation where the priv. signal is software-controlled, setting it to the usr_id 4, which fails the tests (usr_id = 4 allows writes). This test is redundant however as it really is just testing the functionality of the module; It is expected to write when usr_id = 4. Testing for this vulnerability does not work in a testbench simulation.
+The testbench does something similar to the previous test for the next: A glitch pulse from the clock is injected, but then afterwards the usr_id is set to 4 once again, so another write succeeds. The comments state that an attacker sets the priv. id after a glitch, but once again this is not something that can be tested accurately in a testbench simulation.
+
+No code repair is done as although these tests failed, they tests themselves are not well designed.
