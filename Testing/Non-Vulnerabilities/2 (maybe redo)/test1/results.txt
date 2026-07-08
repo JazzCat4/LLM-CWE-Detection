@@ -1,0 +1,32 @@
+NOTE: Maybe redo this one adding default state for FSM?
+
+TYPE CLASSIFICATION
+Module type: Clock / power / reset logic
+Relevant CWEs: 1234, 1247
+
+ASSET IDENTIFICATION
+Assets: count (register), state, value (input), LED (output)
+Privilege domains: No explicit priv. domains
+Clock and reset: Single synchronous process on POSEDGE CLK. Active low reset. On reset, FSM returns to state 0, count=0.
+Adversary capabilities: Manipulate inputs, toggling enable input, manipulating CLK/RST, observing LED output
+Security rules: No explicit security rules
+FSM: State 0 - 3 defined and transition rules. No recovery logic for state > 2 or random corruption.
+
+PDG ANALYSIS
+Reachability: All internal nodes are reachable from external inputs under normal operation
+Dominance: The control structure is strictly hierarchical: RST->S0->S1->S2->S0
+Taint: All untrusted inputs propagate taint into internal state and outward through LED.
+
+CWE DRIVEN REVIEW
+1247:No protection against clock glitches, or real glitches. FSM has no error/illegal-state handling. Single-cycle decisions with no redundancy.
+1234: NONE
+
+TESTBENCH GENERATION
+Testbench generated correctly, however does not have any explicit checks to see if the module passes/failed. One test failed as the tesbench forced a state onto the FSM that it does not handle.
+
+CODE REPAIR
+Fixes: Added a glitch detector input that forces a safe error state
+A multi-bit FSM encoding with explicit ERROR state
+A defensive default behavior for illegal states.
+
+Again, new testbench does not actually have a way to check if the module fails. But code is good.
