@@ -1,0 +1,108 @@
+1. Type Classification
+    CWE-226, CWE-1256, CWE-1262
+2. Asset Identification
+    Assets
+        - secret_bit (control over use of secret data)
+        - secret_data holds sensitive information
+        - acc (derived secret state)
+    Privilege Domain Boundaries
+        - Input interface vs internal state
+        - secure vs non-secure domains (potential)
+        - Privileged vs unprivileged control (potential)
+        - on-chip vs off-chip (potential)
+    Clock Behavior
+        - Synchronous update on posedge clk
+    Reset Scheme
+        - Asynchronous active-low reset (negedge rst_n)
+    Adversary Capabilities
+        - Manipulating inputs (secret_bit and secret_data)
+        - Clock/reset maniplation
+        - External observation of acc (if exposed)
+    Security Rules
+        - Conditional use of secret_data through secret_bit
+        - Reset clears acc to zero
+    FSM
+        - Two mode Behavior: Accumulate vs holds
+        - Reset/clock glitches create semantically inconsistent situations.
+3. Dependency Analysis Graph
+    Reachability:
+        - secret_data reached acc_reg (secret_data -> update_logic -> acc_next -> acc_reg -> output_acc)
+        - secret_bit reaches acc_reg through control flow (secret_bit -> update_logic -> acc_next -> acc_reg)
+        - rst_n directly reaches acc_reg (rst_n -> reset_logic -> acc_reg)
+        - clk reachces acc_reg through state update trigger.
+        - Every input can reach acc_reg, which can reach the output.
+    Dominance:
+        - rst_n dominates acc_reg.
+        - clk dominates all state transitions.
+        - secret_bit dominates the use of secret_data
+        - acc_reg domaintes the output acc.
+    Taint Analysis:
+        - secret_data leads to full taint propagation into persistent state and output.
+        - secret_bit has a control-flow taint. The output reveals whether secret-dependent updates occurred.
+        - acc_reg becomes a derived secret asset because it contains accumulated secret-dependent values.
+        - If output_acc is observable outside the secure domain, both data-taint and control-taint leak.
+4. CWE-Driven Review
+    CWE-226:
+        - Sensitive information not removed before reuse (acc_reg)
+        - Missing comprehensive scrub paths
+    CWE-1256:
+        - Unrestricted software/hardware control over secret-processing enable (secret_bit)
+        - Mixed-privilege behavior with no separation
+    CWE-1262:
+        - No access control on sensitive register interface
+        - Trust/privilege signals are potentially software-controllable (secret_bit)
+        - Missing protection on read path of secret-derived state.
+        - Default-open access policy to secret-handling logic
+5. Testbench Generation
+Testbench generated and compiled successfully.
+6. Simulation
+Run 1 (Original):
+    === CWE Security Validation Testbench Start ===
+    [CWE-226] After secret injection, acc = a5
+    [CWE-226] After context switch (no scrub), acc still = a5
+    [CWE-226] After reset, acc = 00 (should be 00)
+    [CWE-226] After reuse, acc = 3c (should not contain old secrets)
+    [CWE-1256] Unprivileged toggle: acc = 2c
+    [CWE-1262] Read acc (secret-derived) = 2c
+    [CWE-1262] Attacker read #2: acc = 1c
+    [CWE-1262] Attacker read #3: acc = 0c
+    [CWE-1262] Attacker write path: acc = a5
+    === CWE Security Validation Testbench End ===
+Run 2 (First Repair):
+    === Hardened CWE Security Validation Testbench Start ===
+    [CWE-226] After secret injection, acc (priv) = a5
+    [CWE-226] After context switch scrub, acc = a5 (should be 00)
+    [CWE-226] Before reset, acc = e1
+    [CWE-226] After reset, acc = 3c (should be 00)
+    [CWE-1256] Unprivileged toggle: acc = 00 (should remain 00)
+    [CWE-1262] Privileged read: acc = 10
+    [CWE-1262] Unprivileged read: acc = 00 (should be 00)
+    [CWE-226/CWE-1262] After scrub + privileged, acc = 10 (should be 00)
+    === Hardened CWE Security Validation Testbench End ===
+Run 3 (2nd Repair):
+    === Hardened CWE Security Validation Testbench Start ===
+    [CWE-226] After secret injection, acc (priv) = a5
+    [CWE-226] After context switch scrub, acc = a5 (should be 00)
+    [CWE-226] Before reset, acc = e1
+    [CWE-226] After reset, acc = 3c (should be 00)
+    [CWE-1256] Unprivileged toggle: acc = 00 (should remain 00)
+    [CWE-1262] Privileged read: acc = 10
+    [CWE-1262] Unprivileged read: acc = 00 (should be 00)
+    [CWE-226/CWE-1262] After scrub + privileged, acc = 10 (should be 00)
+    === Hardened CWE Security Validation Testbench End ===
+Run 4 (3rd Repair):
+    === Hardened CWE Security Validation Testbench Start ===
+    [CWE-226] After secret injection, acc (priv) = 00
+    [CWE-226] After context switch scrub, acc = 00 (should be 00)
+    [CWE-226] Before reset, acc = 00
+    [CWE-226] After reset, acc = 00 (should be 00)
+    [CWE-1256] Unprivileged toggle: acc = 00 (should remain 00)
+    [CWE-1262] Privileged read: acc = 10
+    [CWE-1262] Unprivileged read: acc = 00 (should be 00)
+    [CWE-226/CWE-1262] After scrub + privileged, acc = 00 (should be 00)
+    === Hardened CWE Security Validation Testbench End ===
+7. Code Repair
+Run 1 -> Failed several tests -> Repair -> Step 6, Run 2
+Run 2 -> Failed three tests -> Step 6, Run 3
+Run 3 -> Failed three tests -> Repair -> Step 6, Run 4
+Run 4 -> Failed one test, didn't detect CWE-1300 -> FAILURE
