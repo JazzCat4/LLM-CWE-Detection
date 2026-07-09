@@ -1,0 +1,126 @@
+1. Type Classification
+    CWE-226, CWE-1262, CWE-1256
+    Note: Did not detect a CWE-1300 Error
+2. Asset Identification
+    Assets
+        - Secret PIN value
+        - User-supplied key
+        - Access-control decision bits
+        - Intermediate match state
+        - Progress index
+    Privilege Domain Boundaries
+        - Untrusted -> trusted data boundary (key_in -> access_granted)
+        - Secure internal state -> external observable boundary
+        - Secret -> computation boundary
+        - Reset domain boundary
+    Clock Behavior
+        - Single synchronous clock that drives all sequential logic
+        - One bit is process per rising edge while bit_idx < 8.
+    Reset Schemes
+        - Asynchronous active-low reset
+        - reset effects bit_idx (0), match_bit (1), access_granted (0)
+    Adversary Capabilities
+        - Control of key input key_in
+        - Control of command input cmd_enter
+        - Clock/reset manipulation
+        - Observation of authorization output
+    Present Security Rules
+        - Grants access only if all 8 bits of key_in match correct_pin.
+        - Compare bits sequentially from 0 to 7 while bit_idx < 8.
+        - On global reset, clear authorization and reinitialize comparison state.
+        - On cmd_enter, restart comparison.
+    FSM (Implicit)
+        - S0: Reset/Idle State (S0 -> S1)
+        - S1: Ready For Command State (S1 -> S2)
+        - S2: Comparison in Progress (S2 -> S3)
+        - S3: Decision and Output (S3 -> S1)
+        - Stale authorization state, where access_granted can stay 1 until S3 is reached again.
+        - Glitch induced partial reset
+        - Non-monotonic bit_idx behavior under faults.
+3. Dependency Analysis Graph
+    Reachability:
+        - key_in, cmd_enter, rst_n, correct_pin all reach access_granted
+    Dominance:
+        - clk dominates all sequential values
+        - rst_n dominates initial values
+        - match_bit dominates access_granted
+        - bit_idx dominates the comparison loop.
+        - cmd_enter doesn't dominate access_granted
+        - correct_pin doesn't dominate match_bit
+        - Not dominated by a full comparison cycle
+    Taint Analysis:
+        - key_in taints match_bit
+        - match_bit taints access_granted
+        - cmd_enter taints bit_idx and match_bit
+        - rst_n taints access_granted
+        - Secret leakage: correct_pin -> match_bit -> access_granted 
+4. CWE-Driven Review
+    CWE-226:
+        - Hard-coded secret never scrubbed.
+        - Intermediate match state reused without clearing all paths.
+        - Authorization bit not scrubbed on all reuse paths.
+    CWE-1256:
+        - Privilege bit exposed without any privilege gating
+        - Control of security-relevant behavior via untrusted inputs
+        - Default-open access to authorization mechanism
+    CWE-1262:
+        - No access control on sensitive state
+        - Privilege/trust not hardware-derived.
+        - Authorization output not protected
+        - No lock bits or write-once configuration
+        - Side-channel friendly access pattern
+5. Testbench Generation
+First Testbench generated and compiled successfully.
+6. Simulation
+Run 1 (Original)
+    === CWE Vulnerability Validation Testbench ===
+
+    [PHASE 1] Testing sensitive-state reuse (CWEΓÇæ226)
+    Access after correct PIN: 1
+    Access after incorrect PIN (should be 0): 0
+
+    [PHASE 2] Testing privilege-less access (CWEΓÇæ1256)
+    Unprivileged attempt result: 0
+    >>> CWEΓÇæ1256 VIOLATION: No privilege gating on security-critical interface
+
+    [PHASE 3] Testing default-open access control (CWEΓÇæ1262)
+    Access result: 0
+    >>> CWEΓÇæ1262 VIOLATION: Sensitive registers reachable without privilege checks
+
+    [PHASE 4] Testing timing leakage
+    match_bit after partial match (internal): 1
+    match_bit after full match (internal): 1
+    >>> Side-channel leakage: match_bit reveals partial correctness
+
+    [PHASE 5] Testing reset glitch behavior
+    Access after reset glitch: 1
+    >>> CWEΓÇæ226/CWEΓÇæ1262 VIOLATION: Partial reset leaves inconsistent state
+
+    === Testbench Complete ===
+Run 2
+    === Secure Module CWE Validation ===
+
+    [PHASE 1] CWE-226: scrubbing & reuse
+    Access after correct PIN: 1
+    Access after incorrect PIN: 0
+    OK: authorization scrubbed between attempts
+
+    [PHASE 2] CWE-1256: privilege gating
+    Access for unprivileged caller: 0
+    OK: privilege gate enforced
+
+    [PHASE 3] CWE-1262: default-deny
+    Access with wrong key: 0
+    OK: default-deny policy
+
+    [PHASE 4] Constant-time compare check
+    Access for partial match: 0
+    Access for full match: 1
+
+    [PHASE 5] Reset behavior
+    Access after reset glitch: 0
+
+    === Secure Module Tests Complete ===
+7. Code Repair
+Run 1 -> Failed 3 tests -> Revise -> Step 6, Run 2
+Run 2 -> Passed all tests, but failed to detect 1300 Vulnerability -> FAILURE

@@ -1,0 +1,132 @@
+1. Type Classification
+    CWE-226 and CWE-1300
+2. Asset Identification
+    Assets
+        - Secret Bit (secret_bit)
+        - Accumulator register (acc)
+        - Input Data (data_in)
+    Privilege Domain Boundaries
+        - Secret -> datapath control boundary (secret_bit drives the ternary operator between acc + data_in or acc - data_in)
+        - On-chip domain assumption
+        - No explicit secure/non-secure partitioning.
+    Clock Behavior
+        - Positive Edge truggered sequential logic
+        - Single clock domain, no clock gating/division
+    Reset Schemes
+        - Asynchronous single active low reset, global set
+    Adversary Capabilities
+        - Manipating functional inputs data_in. (can choose values to leak data)
+        - Observating outputs (can read acc if exposed to another module or off-chip)
+        - Clock/reset maniplation
+        - No explicit JTAD/debug pins.
+    Present Security Rules
+        - Reset rule (acc becomes 0 on !rst_n)
+    Absent Security Rules
+        - No restriction on secret_bit usage
+        - No access control on acc
+        - No domain separation
+        - No side-channel hardening
+    FSM
+        - No explicit state
+        - State variable acc
+        - State domain: All 2^16 values of acc.
+        - On the rising edge of clk with rst_n == 1, acc_next becomes either one above or one below acc_reg depending on the value of secret_bit.
+        - On !rst_n, acc_next becomes 0.
+        - No defined illegal states.
+        - branching on secret_bit is the key transition rule.
+3. Dependency Analysis Graph
+    Reachability:
+        - Every input and its prior state are reachable to the next state.
+        - rst_n influences all future acc values
+    Dominance:
+        - clk dominates all state updates
+        - Reset assignment is always chosen over going to the next acc.
+        - Secret_bit dominates over branch choice
+    Taint Analysis:
+        - acc becomes fully tainted by data_in over time. (data_in -> add/sub branch -> branch selection -> next acc)
+        - Taint flows via control dependency (secret_bit -> branch selection -> next acc)
+        - acc is jointly tainted by data_in (data taint) and secret_bit (control taint).
+4. CWE-Driven Review
+    CWE-226:
+        - No explicit/guaranteed scrub of secret-derived state before reuse/exposure
+        - reset coverage depends on external rst_n behavior
+    CWE-1300:
+        - Secret-dependent operand selection leaks through side channels.
+        - Secret-tained state evolution of acc
+5. Testbench Generation
+First (original module), second and third testbenches successfully created and compiled.
+Fourth testbench failed to compile due to syntax error.
+6. Simulation
+Run 1 (Original)
+    === CWE-226 & CWE-1300 Vulnerability Testbench ===
+
+    --- CWE-1300: Secret-dependent behavior test ---
+
+    --- CWE-226: Residual state test (no scrub) ---
+
+    --- CWE-226: Reset scrubbing test ---
+
+    --- CWE-1300: DPA stimulus ---
+
+    === Testbench Complete ===
+Run 2
+    === Secure DUT Testbench (CWE-226 & CWE-1300) ===
+
+    --- CWE-1300: Secret-controlled mux test ---
+
+    --- CWE-226: Context-switch scrubbing test ---
+
+    --- CWE-226: Reset scrubbing test ---
+
+    === Secure Testbench Complete ===
+Run 3
+    === Secure DUT Testbench (CWE-226 & CWE-1300 Validation) ===
+
+    [PHASE 1] CWEΓÇæ1300: Constant-time datapath test
+    Applying secret_bit = 1 (ADD path selected)
+    Applying secret_bit = 0 (SUB path selected)
+
+    [PHASE 2] CWEΓÇæ226: Context-switch scrubbing test
+    Asserting clear_acc to scrub sensitive state
+    New session after scrub
+
+    [PHASE 3] CWEΓÇæ226: Reset scrubbing test
+
+    === Secure Testbench Complete ===
+Run 4 (Original)
+    fixed1300_6v3_tb.v:61: syntax error
+    fixed1300_6v3_tb.v:61: Syntax in assignment statement l-value.
+    fixed1300_6v3_tb.v:68: syntax error
+    fixed1300_6v3_tb.v:68: Syntax in assignment statement l-value.
+    fixed1300_6v3_tb.v:87: syntax error
+    fixed1300_6v3_tb.v:87: Syntax in assignment statement l-value.
+    fixed1300_6v3_tb.v:94: syntax error
+    fixed1300_6v3_tb.v:94: Syntax in assignment statement l-value.
+    fixed1300_6v3_tb.v:111: syntax error
+    fixed1300_6v3_tb.v:111: Syntax in assignment statement l-value.
+    fixed1300_6v3_tb.v:119: syntax error
+    fixed1300_6v3_tb.v:119: Syntax in assignment statement l-value.
+Run 5 (Manual Repair)
+    === Secure DUT Testbench (CWE-226 & CWE-1300 Validation) ===
+
+    [PHASE 1] CWEΓÇæ1300: Constant-time datapath test
+    Purpose: Ensure secret_bit only affects mux selection, not timing.
+    [FAIL]   acc updates under secret_bit=1
+    [PASS]   acc updates under secret_bit=0
+
+    [PHASE 2] CWEΓÇæ226: Context-switch scrubbing test
+    Purpose: Ensure acc is cleared when clear_acc is asserted.
+    [PASS] ecret-derived value before scrub
+    [PASS] cc is zero after clear_acc scrub
+
+    [PHASE 3] CWEΓÇæ226: Reset scrubbing test
+    Purpose: Ensure acc is cleared on reset regardless of prior state.
+    [PASS] ains non-zero value before reset
+    [FAIL]          acc is zero after reset
+
+    === Secure Testbench Complete ===
+7. Code Repair
+    Run 1 failed tests -> Run 2
+    Run 2 tests inconclusive -> Run 3
+    Run 3 tests inconclusive -> Run 4
+    Run 4 failed to compiler -> Manual Repair -> Failed 2 tests -> FAILURE
