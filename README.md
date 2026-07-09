@@ -6,7 +6,7 @@ Verilog is a Hardware Description Language (HDL) used to describe and implement 
 
 <!-- Add more to this section later. -->
 # 1. Introduction
-Due to the constant improvement and evolution of software security, computers have become increasingly difficult for adversaries to exfiltrate personal information from. However, even if the software on a device is secure, its hardware can still be prone to vulnerabilities that nullify software-protections. Most circuits can be represented by a hardware description language (HDL), like a programming language. An example of an HDL is Verilog, which can describe circuits at the Register Transfer Level (RTL), which is a combination of the dataflow between circuit components and the intentional functionality of the system (Meng et al. 2025). However, if a circuit with a bug is produced, that bug becomes permanent as the physical circuit is created (Baleegh et al. 2024). As a result, MITRE has created a list called Common Weakness Enumerations (CWE), consisting of different groups of these vulnerabilities on a device's software or hardware based on its design. Hardware-based CWEs can lead to unauthorized data exposure, privilege escalation, and other issues if not properly checked. 
+Due to the constant improvement and evolution of software security, computers have become increasingly difficult for adversaries to exfiltrate personal information from. However, even if the software on a device is secure, its hardware can still be prone to vulnerabilities that nullify software-protections. Most circuits can be represented by a hardware description language (HDL), like a programming language. An example of an HDL is Verilog, which can describe circuits at the Register Transfer Level (RTL), which is a combination of the dataflow between circuit components and the intentional functionality of the system (Meng et al. 2025). However, if a circuit with a bug is produced, that bug becomes permanent as the physical circuit is created (Ahmad et al. 2024). As a result, MITRE has created a list called Common Weakness Enumerations (CWE), consisting of different groups of these vulnerabilities on a device's software or hardware based on its design. Hardware-based CWEs can lead to unauthorized data exposure, privilege escalation, and other issues if not properly checked. 
 
 According to Meng et al (2025), the main bugs within Verilog RTL involve assignment statements, variable declaration statements, and if-statements, all of which are common within complex circuits. An issue that arises with the increasing number of bugs is that manual debugging has become more tedious. Therefore, hardware designers have started to employ language learning models (LLMs) such as MAGE and AIVRIL as a means of RTL code repair, particularly with locating errors and creating testbenches (Paria and Bhunia, 2026). However, LLMs are prone to hallucination, and lack the sufficient knowledge required to provide repair without needing a human to review it properly for any additional bugs (Alsaqer et al. 2024). Therefore, we propose a new framework to not only make the task of debugging RTL Verilog code less tedious but also provide a guide to automate LLMs to debug and repair RTL code more efficiently.
 
@@ -99,9 +99,6 @@ The generated testbench is then compiled and ran to test the given RTL design un
 Utilizing the results from the simulation, the RTL design will undergo code repair. The AI model is given the RTL design, all failed testbench tests, and the list of CWE design rules. The AI model is instructed to fix the module based off of the failed tests from the testbench simulation, while utilzing the CWE design rules as a guide for code repair. The AI model is also instructed to generate an updated testbench if changes to the RTL design were made that make it incompatible to the previously generated testbench (e.g. a new input). Once the fixed module (and potentially updated testbench) is generated, the simulation step is repeated (3.6) testing the repaired RTL design. Code repair was performed a maximum of 3 times; If the repaired module continued to fail the testbench after the 3rd iteration, the test was marked as a failure.
 
 # 4. Results
-
-## Results
-
 The evaluation revealed that the AI model demonstrated strong capabilities in understanding and reasoning about Verilog hardware designs and CWEs, but its performance varied depending on the task being performed.
 
 The module classification produced favorable results. Across the evaluation, the AI correctly identified the functional type of the Verilog module in nearly all cases, with only a small number of misclassifications observed. ** ENTER AMOUNT **
@@ -125,15 +122,9 @@ Consistent with the observations made for vulnerable modules, the quality of AI-
 
 # 6. References
 <!--APA Format-->
-MITRE. (2025, August 18). CWE - 2025 Most Important Hardware Weaknesses. https://cwe.mitre.org/topHW/archive/2025/2025_CWE_MIHW.html
-
-Qi, H., Du, Y., Zhang, L., Liew, S. C., Chen, K., & Du, Y. (2026, April). Verirag: A retrieval-augmented framework for automated rtl testability repair. In 2026 27th International Symposium on Quality Electronic Design (ISQED) (pp. 1-8). IEEE.
-
 Ahmad, B., Thakur, S., Tan, B., Karri, R., & Pearce, H. (2024). On Hardware Security Bug Code Fixes By Prompting Large Language Models. IEEE Transactions on Information Forensics and Security, 19, 1–1. https://doi.org/10.1109/tifs.2024.3374558
 
 Alsaqer, S., Alajmi, S., Ahmad, I., & Alfailakawi, M. (2024). The potential of LLMs in hardware design. Journal of Engineering Research, 13(3). https://doi.org/10.1016/j.jer.2024.08.001
-
-Cheung, B. (2025, December). Abstraction of Thought Makes AI Better Reasoners. Benny’s Mind Hack. https://bennycheung.github.io/abstraction-of-thought-makes-ai-better-reasoners
 
 Knechtel, J., Sinanoglu, O., & Karri, R. (2026). LLMs for Secure Hardware Design and Related Problems: Opportunities and Challenges. In arXiv. https://arxiv.org/abs/2605.10807
 
@@ -143,12 +134,20 @@ Long, X., Xia, Y., Kuang, L., Wan, Y., & Liu, Z. (2026). VerilogLAVD: LLM-Aided 
 
 Mastora, M., & Sullivan, D. (2026). When Repairs Are Not Unique: Rethinking RTL Repair Benchmarks. Proceedings of the Great Lakes Symposium on VLSI 2026, 709–710. https://doi.org/10.1145/3787109.3815318
 
-Mell, P., & Bojanova, I. (2024). Hardware Security Failure Scenarios: Potential Hardware Weaknesses. In NIST Computer Security Research Center. National Institute of Standards and Technology. https://doi.org/10.6028/nist.ir.8517
-
 Meng, X., Ji, X., Zhang, G., He, J., Yang, D., Chen, F., Wang, J., Yu, C., Zhao, X., & Wu, J. (2025). Rtl design flaws revisited: a data-driven study of systematic bug patterns in Verilog code. The Journal of Supercomputing, 81(14). https://doi.org/10.1007/s11227-025-07811-9
 
-Mukherjee, R., & Chakraborty, R. S. (2026). Detecting Hardware Trojans in High-Level Synthesis-Generated RTL using Large Language Models. ACM Transactions on Design Automation of Electronic Systems. https://doi.org/10.1145/3795509
+MITRE. (2025, August 18). CWE - 2025 Most Important Hardware Weaknesses. https://cwe.mitre.org/topHW/archive/2025/2025_CWE_MIHW.html
 
 Paria, S., & Bhunia, S. (2026). Harnessing the Power of LLMs for Enhancing Hardware Security. SN Computer Science, 7(2). https://doi.org/10.1007/s42979-026-04799-8
 
-Qi, H., Du, Y., Zhang, L., Liew, S. C., Chen, K., & Du, Y. (2026). VeriRAG: A Retrieval-Augmented Framework for Automated RTL Testability Repair. 2026 27th International Symposium on Quality Electronic Design (ISQED), 1–8. https://doi.org/10.1109/isqed69900.2026.11534732
+Qi, H., Du, Y., Zhang, L., Liew, S. C., Chen, K., & Du, Y. (2026, April). Verirag: A retrieval-augmented framework for automated rtl testability repair. In 2026 27th International Symposium on Quality Electronic Design (ISQED) (pp. 1-8). IEEE.
+
+## Unused References
+
+Cheung, B. (2025, December). Abstraction of Thought Makes AI Better Reasoners. Benny’s Mind Hack. https://bennycheung.github.io/abstraction-of-thought-makes-ai-better-reasoners
+
+Mell, P., & Bojanova, I. (2024). Hardware Security Failure Scenarios: Potential Hardware Weaknesses. In NIST Computer Security Research Center. National Institute of Standards and Technology. https://doi.org/10.6028/nist.ir.8517
+
+Mukherjee, R., & Chakraborty, R. S. (2026). Detecting Hardware Trojans in High-Level Synthesis-Generated RTL using Large Language Models. ACM Transactions on Design Automation of Electronic Systems. https://doi.org/10.1145/3795509
+
+
