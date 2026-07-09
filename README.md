@@ -35,7 +35,21 @@ Our methodology was designed through the analysis of CWE entries (MITRE, 2025), 
 Given an RTL Design, the role and features of the module are first identified. The module is then analyzed to determine important assets, behavior, data, and control flow. A CWE-driven review is then done utilzing the results of the analysis and module to identify potential vulnerabilties. A testbench is then created based off of potential and suspected vulnerabilities. The module is tested using the testbench, and reparied utilizing CWE-Design rules until the module passes simulation. We utilized Microsoft Copilot as the LLM to judge performance; Other models may yield different result.
 
 <img width="1280" height="720" alt="Methodology Flowchart" src="https://github.com/user-attachments/assets/17d01cc1-edea-47c9-9a1c-a2b0b6c53b71" />
+
 ##### Figure 1: High-Level Graph of Methodology
+
+Our methodology was tested on 32 Verilog single-module designs. Of these modules, 27 contained a corresponding CWE in its design. The remaining 5 modules were used to test the validity of our methodology and the AI model's ability to determine if a module contained vulnerabilities on modules that had no CWE. The Verilog modules were designed through study of the common causes of corresponding CWEs. Some modules were also obtained from the dataset of a previous study (Qi et al., 2026). The distribution of the modules are as follows:
+
+- CWE-226: 6
+- CWE-1189: 1
+- CWE-1191: 1
+- CWE-1234: 7
+- CWE-1247: 1
+- CWE-1256: 1
+- CWE-1260: 1
+- CWE-1262: 3
+- CWE-1300: 6
+- Non-Vulnerabilities: 5
 
 ## 3.1 Type Classification
 The role of the module and any potential features are first identified. The AI model is given the (potentially) buggy module, along with a list of Module Types, Features and their corresponding potential CWEs (Figure 2). The AI model is instructured to identify any of the features on the list present in the given RTL design. It is possible to have multiple features in the design depending on the complexity of the module. 
@@ -106,6 +120,8 @@ Code repair produced mixed results. While the AI was often capable of generating
 # 6. References
 <!--APA Format-->
 MITRE. (2025, August 18). CWE - 2025 Most Important Hardware Weaknesses. https://cwe.mitre.org/topHW/archive/2025/2025_CWE_MIHW.html
+
+Qi, H., Du, Y., Zhang, L., Liew, S. C., Chen, K., & Du, Y. (2026, April). Verirag: A retrieval-augmented framework for automated rtl testability repair. In 2026 27th International Symposium on Quality Electronic Design (ISQED) (pp. 1-8). IEEE.
 
 Ahmad, B., Thakur, S., Tan, B., Karri, R., & Pearce, H. (2024). On Hardware Security Bug Code Fixes By Prompting Large Language Models. IEEE Transactions on Information Forensics and Security, 19, 1–1. https://doi.org/10.1109/tifs.2024.3374558
 
