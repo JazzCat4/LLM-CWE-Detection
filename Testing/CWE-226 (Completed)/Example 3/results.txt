@@ -130,6 +130,6 @@ Run 3
 
     === END OF SECURE TESTS ===
 7. Code Repair
-Run 1 failed 5 tests -> Code Repair using LLM -> Step 6
-Run 2 failed 3 tests -> Code Repair with LLM Again -> Step 6
+Run 1 failed 5 tests -> Code Repair using LLM -> Step 6, Run 2
+Run 2 failed 3 tests -> Code Repair with LLM Again -> Step 6, Run 3
 Run 3 failed 0 tests -> PASS

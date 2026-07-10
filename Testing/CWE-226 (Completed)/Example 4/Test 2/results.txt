@@ -1,0 +1,192 @@
+1. Type Classification
+    226, 1262, 1256, 1189, 1260, 1247, 1234
+2. Asset Identification
+Assets:
+    - Secret data buffer
+    - Output secret register
+    - Control pointers
+    - Occupancy counter
+    - Status flags
+Privilege Boundaries:
+    - Data input/output boundary
+    - Control Boundary
+    - Status boundary
+    - Implicit assumption
+Clock behavior and Reset Scheme:
+    - Single clock domain
+    - Synchronous reset
+    - Clears head, tail, count and secret_out, but not secret[].
+Adversary Capabilties:
+    - Control manipulation
+    - Data injection
+    - Reset abuse
+    - Clock manipulation
+    - Observation of status
+Present Security Rule:
+    - Push Rule (write only when push && !full)
+    - Pop Rule (read only when pop && !empty)
+Absent Security Rule:
+    - No access-control rules
+    - No data classification rules
+    - No scrubbing rule
+FSM states:
+    - Empty (0), Full (3), Partially filled (1, 2)
+    - Count values from 4-7 are representable but aren't handled by empty/full logic.
+    - Mismatch between head, tail and count due to glitches or simultaneous push/pop.
+    - Wrap-around behavior of head/tail isn't explicitly constrained.
+3. Dependency Graph Analysis
+    Reachability:
+        - Every external input (push, pop, secret_in, rst) reaches internal secret storage/output.
+        - All internal state (head, tail, count) reaches secret_out through indexing/gating.
+        - Status signals (empty, full) are reachable from count, which is reachable from external control.
+        - All untrusted external signals have full reachability into sensitive assets.
+    Dominance:
+        - push dominates writes to secret[]
+        - pop dominates updates to secret_out
+        - count dominates both empty and full
+        - Also mentions the less dominant nodes:    
+            - rst doesn't dominate secret[]
+            - clk doesn't dominate control correctness
+    Taint-Propagation:
+        - secret_in taints secret[]
+        - push taints secret[], tail, count
+        - pop taints secret_out, head, count
+        - rst taints control state
+        - clk taints all sequential updates
+4. CWE-Driven Review
+    Note: I had to break the prompt into two separate prompts in order to fit all of the CWEs.
+    CWE-226:
+        - Uncleared secret buffer on reset 
+        - Reuse of buffer without scrubbing
+        - No guaranteed zero-write before reuse
+        - No scrub on any exit path
+    CWE-1189:
+        - Shared secret buffer with no domain partitioning
+        - No access checks on control signals.
+        - Status leakage across domains
+        - Reset as a shared control with no isolation
+    CWE-1234:
+        - Did not return anything despite adding it into the prompt.
+    CWE-1247:
+        - Single-cycle, non-redudant security-relevant decisions
+        - No glitch detection/monitoring
+        - Vulnerable counters/pointers
+        - No hardened encoding or error states.
+    CWE-1256:
+        - Unprivileged control of secret storage
+        - Unrestricted reset/control of buffer behavior
+        - Status signals exposed without privilege separation
+    CWE-1260:
+        - Off-by-one / inconsistent capacity semantics
+        - Representable but unhandled illegal count states
+        - Default-permissive behavior on ambigious states
+    CWE-1262:
+        - No privilege/trust checks on sensitive data paths
+        - Default-open access policy.
+        - No lock bits or write-once protection.
+        - Read path to secrets not masked or restricted.
+5. Testbench Generation
+    First testbench successfully compiles, but everything returns as xxxxxxxxxxxxx.
+    Second testbench acts the same.
+    Third testbench acts the same, but less results return as xxx.
+    Fourth testbench
+6. Simulation
+Run 1 (No AI Code Repair to Original Module)
+    === CWE-226 TEST: Secrets persist across reset ===
+    Before reset, secret_out = xxxxxxxxxxxxxxxx
+    After reset, secret_out = xxxxxxxxxxxxxxxx (should NOT persist!)
+
+    === CWE-1189 TEST: Untrusted agent can read/write secrets ===
+    Untrusted read = xxxxxxxxxxxxxxxx (should be blocked!)
+
+    === CWE-1256 TEST: Unprivileged control of hardware features ===
+    Unprivileged access = xxxxxxxxxxxxxxxx (should require privilege!)
+
+    === CWE-1260 TEST: Illegal count states & permissive behavior ===
+    Count = x (should never exceed 3!)
+
+    === CWE-1262 TEST: No access control on secret_out ===
+    secret_out = xxxxxxxxxxxxxxxx (should be masked or privilege-gated!)
+
+    === CWE-1247 TEST: Clock glitch vulnerability ===
+    After glitch, secret_out = xxxxxxxxxxxxxxxx (glitch may corrupt pointers!)
+
+    === CWE-1234 TEST: Debug/override paths (module has none, but test confirmsno lock bits) ===
+    No lock bits or debug gating present ΓÇö any agent can override behavior.
+
+    === TEST COMPLETE ===
+Run 2 (First Repair)
+    === Secure configuration and lock ===
+
+    === CWE-226: Scrub on reset ===
+    Before reset, secret_out = xxxxxxxxxxxxxxxx
+    After reset, secret_out = xxxxxxxxxxxxxxxx (should be 0)
+
+    === CWE-1189: Scrub on domain switch ===
+    After domain switch, secret_out = xxxxxxxxxxxxxxxx (should be 0)
+
+    === CWE-1256 / 1262: Unprivileged access denied ===
+    Unprivileged secret_out = xxxxxxxxxxxxxxxx (should be 0)
+
+    === CWE-1260: Bounded count ===
+    Count (internal) = x (should be <= 3)
+
+    === CWE-1247: Glitch forces error state ===
+    After glitch, secret_out = 0000000000000000 (should be 0)
+
+    === CWE-1234: Debug cannot bypass lock ===
+    In debug, secret_out = 0000000000000000 (should be 0)
+
+    === SECURE TEST COMPLETE ===
+Run 3 (Second Repair)
+    === Secure configuration and lock ===
+
+    === CWE-226: Scrub on reset ===
+    Before reset, secret_out = xxxxxxxxxxxxxxxx
+    After reset, secret_out = xxxxxxxxxxxxxxxx (should be 0)
+
+    === CWE-1189: Scrub on domain switch ===
+    After domain switch, secret_out = xxxxxxxxxxxxxxxx (should be 0)
+
+    === CWE-1256 / 1262: Unprivileged access denied ===
+    Unprivileged secret_out = xxxxxxxxxxxxxxxx (should be 0)
+
+    === CWE-1260: Bounded count ===
+    Count (internal) = x (should be <= 3)
+
+    === CWE-1247: Glitch forces error state ===
+    After glitch, secret_out = 0000000000000000 (should be 0)
+
+    === CWE-1234: Debug cannot bypass lock ===
+    In debug, secret_out = 0000000000000000 (should be 0)
+
+    === SECURE TEST COMPLETE ===
+Run 4 (Third Repair)
+    === Secure configuration and lock ===
+
+    === CWE-226: Scrub on reset ===
+    Before reset, secret_out = xxxxxxxxxxxxxxxx
+    After reset, secret_out = xxxxxxxxxxxxxxxx (should be 0)
+
+    === CWE-1189: Scrub on domain switch ===
+    After domain switch, secret_out = xxxxxxxxxxxxxxxx (should be 0)
+
+    === CWE-1256 / 1262: Unprivileged access denied ===
+    Unprivileged secret_out = xxxxxxxxxxxxxxxx (should be 0)
+
+    === CWE-1260: Bounded count ===
+    Count (internal) = x (should be <= 3)
+
+    === CWE-1247: Glitch forces error state ===
+    After glitch, secret_out = 0000000000000000 (should be 0)
+
+    === CWE-1234: Debug cannot bypass lock ===
+    In debug, secret_out = 0000000000000000 (should be 0)
+
+    === SECURE TEST COMPLETE ===
+7. Code Repair
+Run 1: Failed to display the output -> Run 2
+Run 2: Failed to display proper outputs -> Run 3
+Run 3: Displayed 2 Outputs, Failed to display the others -> Run 4
+Run 4: Same issue as Run 3 -> FAILURE
+
