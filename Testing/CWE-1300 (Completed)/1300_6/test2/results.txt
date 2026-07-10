@@ -1,0 +1,52 @@
+TYPE CLASSIFICATION
+Clock / power / reset logic, crypto accelerator, register file / CSR
+Relevant CWEs: 1247, 1234, 1300, 226 
+Note: AI explicitly specified applicable CWEs
+
+ASSET IDENTIFICATION
+Assets: secret_bit, acc (register), data_in
+Privilege / domain boundaries: reset domain can override functional state
+Clock: All state updates on POSEDGE CLK
+Reset: Active-low reset, reset forces acc to 0.
+Adversary capabilities: Manipulate inputs, clk, and reset
+Security rules: acc = 0 on reset, no access control or priv. checks, masking, explicit restrictions, or separation between secure and non-secure domains
+States: When secret_bit = 1, acc_next = acc + data_in, otherwise acc_next = acc - data_in
+
+PDG ANALYSIS
+Reachability: All inputs reach the output through acc_next = acc
+Dominance: clk and reset dominate all state transitions; reset can override secret-dependent behavior
+Taint: Both secret_bit and data_in taint the output. Secret-dependent arithmetic creates a direct leakage path (intended vulnerability)
+
+CWE DRIVEN REVIEW
+1247: No glitch detection or monitoring, single-cycle unprotected state updates
+1300: Secret-dependent branching/operand selection (intended vulnerability).
+226: Secret-derived register no scrubbed on reuse. Partial reset coverage risk
+1234: NONE
+
+TESTBENCH GENERATION
+When testing for 1300, doesn't really show how side channel is being leaked
+Clock glitch just adds an unintended pulse to show how the module is affected
+Reset glitch also just does a reset
+Scrubbing test correctly verifies behavior
+
+Overall, testbench doesn't tell us much.
+
+CODE REPAIR
+Fixes: Added glitch detector to force safe state
+Added multi-bit encoded secret mode to not leak data
+Added input for explicit scrub request.
+Reworked logic for defensive reset, and secret-dependent selection via multi-bit encoding
+
+New module seems fine, but testbench is failing
+Testbench checks for side-channel logical test, which passes
+Glitch detection does not go into safe error state
+Reset glitch test passes
+Scrubbing test does not work
+
+CODE REPAIR 2
+Fixes: Latched fault + scrub, glitch-safe, scrub-safe
+
+Only one scrubbing test passes now
+
+CODE REPAIR 3
+Same issues persist, test FAILED
