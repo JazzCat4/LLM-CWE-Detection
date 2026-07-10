@@ -1,0 +1,40 @@
+TYPE CLASSIFICATION
+Module types: Clock / power / reset logic, register file / CSR
+relevant CWEs: 1247, 1234, 226, 1262, 1256
+NOTICE: Cyrpto accelerator not included!!
+
+ASSET IDENTIFICATION
+Asset: Secret_bit, secret_data, acc (secret-derived state)
+Privilege boundaries: Secret inputs vs non-secret environment
+Clock and reset: Synchronous update on posedge clk. Active=low reset which clears acc register
+Adversary capability: Manipulating clk, reset, controlling secret_bit and secret_data, observing acc (register) externally
+Security rules: Conditional update based on secret_bit, reset clears secret-derived state, no access control on acc output
+
+PDG ANALYSIS
+Reachability: Every input can reach the output acc. There is no isolation boundaries preventing reachability
+Dominance: Reset and clock dominates acc_reg, secret_bit does not dominate
+Taint: Both secret_data and secret_bit fully propagate to the output acc_out. There is no masking, no privilege check, no domain separation, and no scrubbing beyond reset.
+
+CWE DRIVEN REVIEW
+226: Acc holds secret-derived data without guaranteed scrub on reuse. Partial scrub coverage
+1262: No priv. or trust check on reading secret-derived register. Default-allow policy for secret data.
+1256: Secret-processing hardware exposed as an unrestricted interface. Mixed-use of secret and non-secret domains without separation.
+1234: reset can override secret state without any lock or lifecycle control
+1247: Single-cycle, glitch-able secret-dependent updates. No glitch detection or monitoring signals
+
+TESTBENCH GENERATION
+Tested to see if value is still in register after secret operation, it was (intended behavior), but marked as failed by test.
+Also testing for unrestricted read access (also intended behavior), which failed as the value is a direct output
+Next test tests for override of secret state via reset, simulating an attacker toggling reset, in which they simply toggle reset, so this test also failed
+The final test injects a clock glitch, where data is inputed multiple times instead of the expected 1. Test fails because module is not glitch resistant (no glitch check)
+
+Overall, redundant tests, and CWE 1300 was never identified.
+
+CODE REPAIR
+Fixed: Scrubs aacc_internal on reset (when unlocked) and on exit from secure_mode
+Uses acc_public with default-deny masking: privileged + secure context can see secret
+Lock_fuse prevents reset from overriding locked secrets; reset behavior depends on lock state
+glitch_detect forces an error state and scrubs secrets, with a defensive state
+
+One testbench test still failed, but ultimate test FAILED due to not catching intended vulnerability
+
