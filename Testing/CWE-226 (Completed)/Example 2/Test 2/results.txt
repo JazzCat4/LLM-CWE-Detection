@@ -1,0 +1,136 @@
+1. Type Classification
+    CWE-226, CWE-1262, CWE-1256, CWE-1247, CWE-1300
+2. Asset Identification
+Assets:
+    - Cryptographic key (key_reg)
+    - Transient Key Input (key_in)
+    - Control asset (write_enable), (load_key)
+    - Reset control (rst_n)
+Privilege Domain Boundaries:
+    - Key Visisbility
+    - Write Control Boundary
+    - Reset Boundary
+    - Missing explicit separation
+Clock/Reset Scheme:
+    - Single clock input that triggers sequential logic on posedge clk.
+    - Asynchronous active-low reset that zeroes key_reg
+Adversary Capabilities:
+    - Reset/Clock Manipulation
+    - Controlling load_key and key_in
+    - Observing key output
+Security Rules:
+    - Reset-based zeroization rule
+Missing Rules:
+    - No rule restricting who can assert load_key
+    - No rule restricting who can drive/observe key_in and key_reg
+    - No lifecycle/mode bits
+    - No lock bit or one-write
+    - No masking/encryption of the stored key.
+    - No explicit rule of zeroization
+FSM states:
+    - Reset state (!rst_n)
+    - Operational state: (rst_n == 1)
+    - No explicitly illegal states
+    - Problematic Conditions:
+        - Rapid toggling of rst_n around posedge clk.
+        - key_reg holding non-initialized/attacker-controlled values without any integrity check.
+3. Dependency Analysis Graph
+Reachability:
+    - All inputs (key_in, load_key, rst_n, clk) are reachable to the key asset key_reg
+Dominance:
+    - Clock edge dominates all state updates
+    - Reset dominates load when rst_n = 0.
+    - No node dominates key_reg in a security-enforcing sense.
+Taint Propagation:
+    - (key_in) key_reg becomes fully tainted by untrusted data whenever load_key=1 and rst_n=1.
+    - (load_key) Control-taint; Attacker can decide when and how often key_reg is updated, enabling the chosen key and side-channel scenarios.
+    - (rst_n) Attacker can force zeroization at arbitrary times, affecting availability and leaking timing information.
+    - (clk) Fault/clock-glitch taint: attacker can disrupt correct key loading or reset behavior.
+4. CWE-Driven Review
+    CWE-226:
+        - key_reg is reused without a guaranteed scrub before reuse or context change.
+        - Zeroization of key-reg occurs only on rst_n assertion.
+        - There is no hardware scrubber or completion signaling.
+    CWE-1247:
+        - Security-critical behavior is decided in single cycles with no redudancy
+        - No glitch detection/monitoring associated with clk or rst_n.
+        - Asynchronous rst_n is directly within the sensitivity list with no synchronization/filtering.
+    CWE-1256:
+        - Write enable for the key load_key isn't gated by any privilege or trust check.
+        - Key storage and update is exposed without privilege separation.
+        - No lock/one-write configurations
+    CWE-1262:
+        - key_reg is exposes as an output port with no read access control
+        - No privilege/trust level check on writes
+        - No lock bits
+        - Default-open access policy
+    CWE-1300:
+        - key_reg has no masking, balancing, etc.
+        - key updates occur in a single cycle with data-dependent switching, leaking info through power/EM traces.
+        - No attempt to make key-handling constant-time or constant power.
+5. Testbench Generation
+    First and second testbench generated successfully.
+6. Simulation
+Run 1 (Unedited)
+    === Starting CWE Security Validation Testbench ===
+
+    --- CWEΓÇæ226 Test: Key overwritten without scrubbing ---
+    [32000] key_reg = aaaabbbbccccddddeeeeffff11112222
+    [42000] key_reg = 3333444455556666777788889999aaaa
+    Expect: No scrub between keys ΓåÆ Vulnerability confirmed.
+
+    --- CWEΓÇæ226 Test: Reset is the ONLY scrub path ---
+    [52000] key_reg = 00000000000000000000000000000000
+    Expect: Key cleared ONLY on reset ΓåÆ Vulnerability confirmed.
+
+    --- CWEΓÇæ1247 Test: Reset glitch during key load ---
+    [62000] key_reg = 00000000000000000000000000000000
+    Expect: Reset glitch corrupts key load ΓåÆ Vulnerability confirmed.
+
+    --- CWEΓÇæ1247 Test: Clock glitch during update ---
+    [75000] key_reg = 0123456789abcdeffedcba9876543210
+    Expect: Clock glitch may cause doubleΓÇæload or metastability ΓåÆ Vulnerability confirmed.
+
+    --- CWEΓÇæ1256 Test: Unauthorized key load allowed ---
+    [85000] key_reg = facefacefacefacefacefacefaceface
+    Expect: Unprivileged load accepted ΓåÆ Vulnerability confirmed.
+
+    --- CWEΓÇæ1262 Test: Key is readable by ANY requester ---
+    Reading key_reg directly: facefacefacefacefacefacefaceface
+    Expect: Sensitive key fully exposed ΓåÆ Vulnerability confirmed.
+
+    --- CWEΓÇæ1300 Test: Key switching activity visible ---
+    [95000] key_reg = ffffffffffffffff0000000000000000
+    [105000] key_reg = fffffffffffffffffffffffffffffffe
+    Expect: Different switching profiles ΓåÆ SideΓÇæchannel leakage confirmed.
+
+    === Security Validation Complete ===
+Run 2 (First AI Code Repair)
+    === Hardened CWE Security Validation Testbench ===
+
+    --- CWE-226: Scrub & write-only behavior ---
+    [32000] key_reg_read = 00000000000000000000000000000000
+    [42000] key_reg_read = 00000000000000000000000000000000
+    Expect: key_reg_read always 0 ΓåÆ no leakage, reuse scrubbed internally.
+
+    --- CWE-1247: Glitch forces scrub + lock ---
+    [52000] key_reg_read = 00000000000000000000000000000000
+    Expect: key_reg_read = 0, key_locked asserted internally, further loads blocked.
+
+    --- CWE-1256/1262: Unprivileged load blocked ---
+    [62000] key_reg_read = 00000000000000000000000000000000
+    Expect: no change, unprivileged load ignored.
+
+    --- CWE-1262: Read access always masked ---
+    Reading key_reg_read directly: 00000000000000000000000000000000
+    Expect: always 0 ΓåÆ key not externally readable.
+
+    --- CWE-1300: External switching independent of key ---
+    [72000] key_reg_read = 00000000000000000000000000000000
+    [82000] key_reg_read = 00000000000000000000000000000000
+    Expect: key_reg_read stays 0 ΓåÆ external timing/power less correlated withkey.
+
+    === Hardened Security Validation Complete ===
+7. Code Repair
+Run 1 -> Failure -> Code Repair -> Step 6, Run 2
+Run 2 -> Pass all tests -> PASS
