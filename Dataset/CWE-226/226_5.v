@@ -1,41 +1,40 @@
-module secret_fifo (
+module test (
     input wire clk,
-    input wire rst,
-    input wire push,
-    input wire pop,
-    input wire [63:0] key_in,
-    output reg [63:0] key_out,
-    output reg empty,
-    output reg full
+    input wire rst_n,
+    input wire en,
+    input wire we,
+    input wire [2:0] addr,
+    input wire [31:0] wdata,
+    output wire [31:0] rdata
 );
 
-    reg [63:0] key [0:3];
-    reg [1:0] head, tail;
-    reg [2:0] count;
+reg [31:0] key_buf[3:0];
+reg [31:0] rdata_reg;
 
-    always @(posedge clk) begin
-        if (rst) begin
-            head <= 0;
-            tail <= 0;
-            count <= 0;
-            key_out <= 0;
-        end else begin
-            if (push && !full) begin
-                key[tail] <= key_in;
-                tail <= tail + 1;
-                count <= count + 1;
-            end
-            if (pop && !empty) begin
-                key_out <= key[head];
-                head <= head + 1;
-                count <= count - 1;
-            end
-        end
-    end
+assign rdata = rdata_reg;
 
-    always @(*) begin
-        empty = (count == 0);
-        full  = (count == 3);
+always @(posedge clk) begin
+    if (!rst_n) begin
+        key_buf[0] <= 32'd0;
+        key_buf[1] <= 32'd0;
+        key_buf[2] <= 32'd0;
+        key_buf[3] <= 32'd0;
+    end else if (en && we) begin
+        case (addr)
+            3'd0: key_buf[0] <= wdata;
+            3'd1: key_buf[1] <= wdata;
+            3'd2: key_buf[2] <= wdata;
+            3'd3: key_buf[3] <= wdata;
+        endcase
+    end else if (en && !we) begin
+        case (addr)
+            3'd0: rdata_reg <= key_buf[0];
+            3'd1: rdata_reg <= key_buf[1];
+            3'd2: rdata_reg <= key_buf[2];
+            3'd3: rdata_reg <= key_buf[3];
+            default: rdata_reg <= 32'd0;
+        endcase
     end
+end
 
 endmodule
