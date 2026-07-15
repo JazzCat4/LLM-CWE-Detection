@@ -162,13 +162,3 @@ MITRE. (2025, August 18). CWE - 2025 Most Important Hardware Weaknesses. https:/
 Paria, S., & Bhunia, S. (2026). Harnessing the Power of LLMs for Enhancing Hardware Security. SN Computer Science, 7(2). https://doi.org/10.1007/s42979-026-04799-8
 
 Qi, H., Du, Y., Zhang, L., Liew, S. C., Chen, K., & Du, Y. (2026, April). Verirag: A retrieval-augmented framework for automated rtl testability repair. In 2026 27th International Symposium on Quality Electronic Design (ISQED) (pp. 1-8). IEEE.
-
-## Unused References
-
-Cheung, B. (2025, December). Abstraction of Thought Makes AI Better Reasoners. Benny’s Mind Hack. https://bennycheung.github.io/abstraction-of-thought-makes-ai-better-reasoners
-
-Mell, P., & Bojanova, I. (2024). Hardware Security Failure Scenarios: Potential Hardware Weaknesses. In NIST Computer Security Research Center. National Institute of Standards and Technology. https://doi.org/10.6028/nist.ir.8517
-
-Mukherjee, R., & Chakraborty, R. S. (2026). Detecting Hardware Trojans in High-Level Synthesis-Generated RTL using Large Language Models. ACM Transactions on Design Automation of Electronic Systems. https://doi.org/10.1145/3795509
-
-
