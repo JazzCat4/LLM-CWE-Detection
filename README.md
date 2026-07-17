@@ -161,4 +161,4 @@ MITRE. (2025, August 18). CWE - 2025 Most Important Hardware Weaknesses. https:/
 
 Paria, S., & Bhunia, S. (2026). Harnessing the Power of LLMs for Enhancing Hardware Security. SN Computer Science, 7(2). https://doi.org/10.1007/s42979-026-04799-8
 
-Qi, H., Du, Y., Zhang, L., Liew, S. C., Chen, K., & Du, Y. (2026, April). Verirag: A retrieval-augmented framework for automated rtl testability repair. In 2026 27th International Symposium on Quality Electronic Design (ISQED) (pp. 1-8). IEEE.
+Qi, H., Du, Y., Zhang, L., Liew, S. C., Chen, K., & Du, Y. (2026). VeriRAG: A Retrieval-Augmented Framework for Automated RTL Testability Repair. 2026 27Th International Symposium on Quality Electronic Design (ISQED), 1–8. https://doi.org/10.1109/isqed69900.2026.11534732
