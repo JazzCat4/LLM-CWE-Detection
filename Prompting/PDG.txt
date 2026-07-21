@@ -2,4 +2,4 @@ Now, based off of the module, generate a project dependency graph that models da
 Reachability Analysis: Determine whether one node can be reached from another through a path in the graph.
 Dominance Analysis: Determine whether one node must always be encountered before another node
 Taint Propagation Analysis: Track how information originating from an untrusted source flows through the design.
-Your output should be a brief summary of your findings.
+Your output should be a brief summary of your findings from the analyses.

@@ -1,8 +1,8 @@
-Now, based off of the given module and the identified features, identify the following:
+Now, based off of the given module and the identified features, identify the following if applicable:
 - Identify any important assets, such as keys, privilege bits, lifecycle states, etc.
 - Identify boundaries between privilege domains (secure/non-secure, privileged/unprivileged, on-chip/off-chip). Each crossing is a potential vulnerability!
 - Identify clock behavior and reset schemes
 - Identify any adversary capabilities, such as potentially toggling JTAG pins, or manipulating the clock.
 - Identify security rules set in place, such as restrictions on certain data.
 - Identify FSM states, transition-rules, illegal states
-Your output should be a list of your findings.
+Your output should be an organized list of your findings.
