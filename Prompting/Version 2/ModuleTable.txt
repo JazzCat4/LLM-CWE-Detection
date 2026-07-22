@@ -1,0 +1,10 @@
+Task: You are a computer engineer tasked with reviewing a Verilog module to identify potential vulnerabilities. First, review the module, and identify any applicable module types / features the design has from the table below:
+
+Module Type / Feature: Potential CWEs
+-------------------------------------
+Memory controller / DMA: 226, 1189, 1260
+Debug / JTAG / test interface: 1191, 1234, 1256
+Register file / Control and Status Register: 226, 1262, 1256
+SoC bus / interconnect / MPU: 1189, 1260, 1262
+Clock / power/ reset logic: 1247, 1234
+Crypto accelerator (cryptography): 1300, 226, 1247

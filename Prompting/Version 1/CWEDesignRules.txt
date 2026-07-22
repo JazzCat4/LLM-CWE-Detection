@@ -48,5 +48,4 @@ CWE-1300 - Improper Protection of Physical Side Channels
 2.	All key-dependent logic uses mux (not if/case) for selection
 3.	Apply blinding or masking techniques to implementations of cryptographic algorithms
 
-
-Now, based off of the found vulnerabilities, the previously given CWE Design Rules, and the failed tests, fix the module while still maintaining its intended functionality. If necessary, generate a new testbench file to test the new module under the same tests in the previous testbench.
+Now, based off of the found vulnerabilities, the previously given CWE Design Rules, and the failed tests, fix the module. If necessary, generate a new testbench file to test the new module under the same tests in the previous testbench.
